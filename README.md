@@ -38,6 +38,10 @@ Open the notebook:
 jupyter notebook notebooks/Prog_Project.ipynb
 ```
 
+## Presentation
+
+`presentation/blackjack_presentation.html` is a single self-contained 22-slide deck with live demos, speaker notes, a timer and keyboard controls. Open it directly in a browser, or serve the `presentation/` folder locally. See `presentation/README.md` for the controls and the data builder.
+
 ## Rules implemented
 
 | Rule | Default |

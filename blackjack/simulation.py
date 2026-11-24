@@ -161,6 +161,19 @@ def _make_result(
     )
 
 
+def _insurance_policy(bot: Bot, true_count: float) -> InsurancePolicy | None:
+    """Return an insurance policy that only bets when the stake is affordable."""
+    if not bot.wants_insurance(true_count):
+        return None
+
+    def policy(game: BlackjackGame) -> bool:
+        if not game.hands:
+            return False
+        return game.bankroll + 1e-9 >= game.hands[0].bet / 2
+
+    return policy
+
+
 def run_bot(
     bot: Bot,
     rounds: int,
@@ -210,9 +223,7 @@ def run_bot(
         wager = min(wager, game.bankroll, rules.max_bet)
         wager = round(wager, 2)
 
-        insurance: InsurancePolicy | None = None
-        if bot.wants_insurance(true_count):
-            insurance = lambda _game: True  # noqa: E731
+        insurance = _insurance_policy(bot, true_count)
         results = game.play_hand(
             wager,
             policy=bot.action,
@@ -362,9 +373,7 @@ def run_competition(
                 continue
             wager = min(wager, game.bankroll, rules.max_bet)
             wager = round(wager, 2)
-            insurance: InsurancePolicy | None = None
-            if bot.wants_insurance(true_count):
-                insurance = lambda _game: True  # noqa: E731
+            insurance = _insurance_policy(bot, true_count)
             results = game.play_hand(
                 wager,
                 policy=bot.action,

@@ -7,6 +7,7 @@ import pytest
 
 from blackjack import (
     BasicStrategyBot,
+    BlackjackGame,
     BetContext,
     FlatBetBot,
     HiLoSpreadBot,
@@ -17,6 +18,7 @@ from blackjack import (
     run_competition,
     run_simulation,
 )
+from blackjack.simulation import _insurance_policy
 
 RULES = Rules()
 
@@ -235,3 +237,48 @@ def test_house_edge_converges_to_theoretical() -> None:
     stats = result.analytics()
     assert 100_000 < stats.hands < 400_000
     assert 0.15 < stats.house_edge_percent < 0.85
+
+
+class AlwaysInsuranceBot(FlatBetBot):
+    """A test bot that always wants insurance."""
+
+    def wants_insurance(self, true_count: float) -> bool:
+        """Always request insurance."""
+        return True
+
+
+def _ace_game(bankroll: float) -> BlackjackGame:
+    """Build a game with the dealer showing an ace and the player on ten-seven."""
+    game = BlackjackGame(Rules(), bankroll, seed=77)
+    game.shoe.stack(["10S", "AC", "7H", "5D"])
+    game.start_hand(min(10.0, bankroll))
+    return game
+
+
+def test_insurance_policy_declines_when_bankroll_is_short() -> None:
+    """A bot cannot buy insurance with no chips behind the main bet."""
+    game = _ace_game(10.0)
+    assert game.state.value == "insurance"
+    policy = _insurance_policy(AlwaysInsuranceBot(unit=10), 5.0)
+    assert policy is not None
+    assert policy(game) is False
+
+
+def test_insurance_policy_accepts_when_affordable() -> None:
+    """A bot with enough chips takes the insurance it asked for."""
+    game = _ace_game(100.0)
+    policy = _insurance_policy(AlwaysInsuranceBot(unit=10), 5.0)
+    assert policy is not None
+    assert policy(game) is True
+
+
+def test_bot_insurance_does_not_raise_on_a_short_bankroll() -> None:
+    """A short bankroll declines insurance instead of crashing the simulation."""
+    result = run_bot(
+        AlwaysInsuranceBot(unit=100),
+        50,
+        starting_bankroll=50,
+        seed=78,
+        track_decisions=False,
+    )
+    assert result.bets.size > 0

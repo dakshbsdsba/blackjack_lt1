@@ -1,6 +1,6 @@
 # Blackjack simulator
 
-A playable blackjack table and a Monte Carlo research tool in one Python project. The rules engine, basic strategy chart, Hi-Lo counter, betting bots and Plotly charts are separate modules. A demonstration notebook walks through every tier, and the same functions are covered by 510 pytest tests.
+A playable blackjack table and a Monte Carlo research tool in one Python project. The rules engine, basic strategy chart, Hi-Lo counter, betting bots and Plotly charts are separate modules. A demonstration notebook walks through every tier, and the same functions are covered by 513 pytest tests.
 
 Built as a group project for a Python programming course.
 
@@ -71,7 +71,7 @@ blackjack/
   simulation.py  Monte Carlo runs and shared-shoe leaderboard
   charts.py      Plotly dashboard, curves and heatmaps
   cli.py         Rich terminal table, demo and report modes
-tests/           510 pytest tests
+tests/           513 pytest tests
 notebooks/
   Prog_Project.ipynb   Tier by tier demonstration with live outputs
 pyproject.toml   Package metadata, pytest, black and flake8 config
@@ -114,7 +114,7 @@ A bet is deducted when the hand starts. A win returns the stake plus an equal pr
 
 | Check | Result |
 | --- | --- |
-| Full test suite | 510 passed |
+| Full test suite | 513 passed |
 | Flat basic strategy, 300,000 rounds | House edge 0.347 percent over 308,277 settled hands |
 | Flat basic strategy, notebook run | House edge 0.394 percent over 205,529 settled hands |
 | Hi-Lo spread, 100,000 rounds | Player edge 0.508 percent over 102,755 settled hands |

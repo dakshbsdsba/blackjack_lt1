@@ -9,8 +9,8 @@ This report maps every requirement in the proposal to the code that implements i
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Full test suite | `python -m pytest -q` | 510 passed in 29.95s |
-| Quick test suite | `python -m pytest -q -m "not slow"` | 507 passed, 3 deselected |
+| Full test suite | `python -m pytest -q` | 513 passed in 28.22s |
+| Quick test suite | `python -m pytest -q -m "not slow"` | 510 passed, 3 deselected |
 | Formatting | `python -m black --check blackjack tests` | 25 files unchanged |
 | Linting | `python -m flake8 blackjack tests` | Exit 0, no findings |
 | Notebook execution | `nbclient` with the project kernel | Executed end to end, zero error outputs |

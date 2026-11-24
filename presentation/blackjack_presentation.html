@@ -1,0 +1,3025 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#070d18">
+<meta name="description" content="Interactive blackjack presentation: rules engine, strategy chart, card counting, Monte Carlo results and tests.">
+<title>Blackjack: from a deck of cards to a Monte Carlo lab</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='13'%3E%E2%99%A0%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #070d18;
+  --bg2: #0b1424;
+  --panel: #101c2f;
+  --panel2: #142238;
+  --ink: #f8fafc;
+  --muted: #cbd5e1;
+  --line: #2a3b55;
+  --cyan: #22d3ee;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #fb7185;
+  --violet: #a78bfa;
+  --accent: #22d3ee;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+  --radius: 18px;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+body.light {
+  --bg: #eef3f8;
+  --bg2: #e2e8f0;
+  --panel: #ffffff;
+  --panel2: #f8fafc;
+  --ink: #0f172a;
+  --muted: #334155;
+  --line: #cbd5e1;
+  --shadow: 0 20px 50px rgba(15, 23, 42, 0.14);
+  --accent: #0e7490;
+}
+* { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+button, select, input { font: inherit; }
+button { cursor: pointer; }
+#deck { position: relative; width: 100vw; height: 100vh; }
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4.2vh 4.8vw 7vh;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(36px) scale(0.995);
+  transition: opacity 260ms ease, transform 260ms ease, visibility 260ms;
+}
+.slide.active { opacity: 1; visibility: visible; transform: none; z-index: 2; }
+.slide.prev { transform: translateX(-36px) scale(0.995); }
+.slide-inner {
+  width: min(1240px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.8vh;
+}
+.kicker {
+  font-size: clamp(0.72rem, 1vw, 0.9rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+}
+h1, h2, h3, p { margin: 0; }
+h1 {
+  font-size: clamp(2.4rem, 5.2vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+h2 {
+  font-size: clamp(1.75rem, 3.2vw, 2.9rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+h3 { font-size: clamp(1.05rem, 1.5vw, 1.35rem); line-height: 1.2; font-weight: 700; }
+p, li {
+  font-size: clamp(0.95rem, 1.2vw, 1.18rem);
+  line-height: 1.5;
+  color: var(--muted);
+}
+.lede {
+  font-size: clamp(1.05rem, 1.55vw, 1.45rem);
+  color: var(--ink);
+  max-width: 900px;
+}
+.accent { color: var(--accent); }
+.green { color: var(--green); }
+.red { color: var(--red); }
+.amber { color: var(--amber); }
+.cyan { color: var(--cyan); }
+.mono { font-family: var(--mono); }
+.small { font-size: 0.82rem; color: var(--muted); }
+.note { font-size: 0.86rem; color: var(--muted); line-height: 1.45; }
+
+.grid-2 { display: grid; grid-template-columns: 1.02fr 0.98fr; gap: clamp(18px, 2.4vw, 34px); align-items: center; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(12px, 1.6vw, 22px); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(10px, 1.3vw, 18px); }
+.panel {
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(14px, 1.7vw, 24px);
+  box-shadow: var(--shadow);
+}
+.panel.tight { padding: 14px 16px; }
+.panel h3 { margin-bottom: 8px; }
+.btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: clamp(0.78rem, 1vw, 0.92rem);
+  font-weight: 600;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+body.light .btn { background: #ffffff; }
+.btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+.btn.primary { background: var(--accent); color: #04121f; border-color: transparent; font-weight: 800; }
+body.light .btn.primary { color: #ffffff; background: #0e7490; }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 6px 11px; font-size: 0.76rem; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 10px; font-size: 0.76rem; color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+body.light .chip { background: #f1f5f9; }
+
+/* Title slide */
+.title-slide .slide-inner { position: relative; }
+.title-meta { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 1.4vh; color: var(--muted); font-size: 0.82rem; }
+.title-meta span { display: inline-flex; align-items: center; gap: 7px; }
+.title-meta span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.hero-cards { position: absolute; right: 2%; top: 4%; width: 260px; height: 220px; pointer-events: none; }
+.hero-cards .pcard { position: absolute; width: 96px; height: 138px; font-size: 1.2rem; box-shadow: 0 18px 40px rgba(0,0,0,0.4); }
+.hero-cards .c1 { transform: rotate(-16deg) translate(10px, 30px); }
+.hero-cards .c2 { transform: rotate(-4deg) translate(52px, 10px); }
+.hero-cards .c3 { transform: rotate(10deg) translate(94px, 34px); }
+.hero-cards .c4 { transform: rotate(24deg) translate(134px, 62px); }
+
+/* Playing cards */
+.pcard {
+  width: 68px; height: 96px; border-radius: 9px;
+  background: #ffffff; color: #0f172a;
+  border: 1px solid #d6dee8;
+  display: inline-flex; flex-direction: column; justify-content: space-between;
+  padding: 6px 7px; font-weight: 800; font-size: 1.05rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  user-select: none;
+}
+.pcard .suit { font-size: 1.25rem; line-height: 1; align-self: flex-end; }
+.pcard.red { color: #c81e3a; }
+.pcard.back {
+  background: repeating-linear-gradient(135deg, #1e3a8a 0 8px, #172554 8px 16px);
+  border-color: #334155; color: transparent;
+}
+.pcard.small { width: 48px; height: 68px; font-size: 0.78rem; padding: 4px 5px; border-radius: 7px; }
+.pcard.small .suit { font-size: 0.9rem; }
+.hand-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; min-height: 96px; }
+.hand-row.small { min-height: 68px; }
+.hand-total { font-size: 0.9rem; color: var(--muted); margin-left: 4px; }
+
+/* Stats */
+.stat-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.stat {
+  flex: 1 1 140px; min-width: 130px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line); border-radius: 13px; padding: 10px 12px;
+}
+body.light .stat { background: #f8fafc; }
+.stat .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.stat .big { font-size: clamp(1.25rem, 1.9vw, 1.75rem); font-weight: 800; color: var(--ink); margin-top: 2px; }
+.stat .sub { font-size: 0.74rem; color: var(--muted); }
+
+/* Question cards */
+.qcard {
+  text-align: left; border-radius: var(--radius); border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel), var(--panel2)); color: var(--ink);
+  padding: 18px; min-height: 150px; display: flex; flex-direction: column; gap: 10px;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+.qcard:hover { transform: translateY(-4px); border-color: var(--accent); }
+.qcard .qnum { font-size: 0.72rem; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; }
+.qcard strong { font-size: clamp(1.05rem, 1.45vw, 1.35rem); line-height: 1.2; }
+.qcard span { font-size: 0.84rem; color: var(--muted); }
+.answer-strip {
+  border-left: 4px solid var(--accent); background: rgba(34, 211, 238, 0.08);
+  padding: 12px 16px; border-radius: 0 10px 10px 0; color: var(--ink);
+  font-size: clamp(0.9rem, 1.05vw, 1.02rem); min-height: 54px;
+}
+
+/* Flow */
+.flow { display: flex; flex-wrap: wrap; gap: 7px; }
+.flow-step {
+  border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--muted);
+  border-radius: 12px; padding: 10px 12px; font-size: clamp(0.74rem, 0.95vw, 0.9rem);
+  font-weight: 700; transition: all 140ms ease;
+}
+body.light .flow-step { background: #ffffff; }
+.flow-step .n { color: var(--accent); margin-right: 5px; }
+.flow-step.active { border-color: var(--accent); color: var(--ink); background: rgba(34, 211, 238, 0.1); transform: translateY(-2px); }
+.flow-detail { min-height: 110px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.flow-detail .fn { font-family: var(--mono); color: var(--accent); font-size: 0.82rem; }
+
+/* Architecture */
+.arch { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.arch-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.arch-node {
+  border: 1px solid var(--line); border-radius: 11px; padding: 9px 12px;
+  background: rgba(255,255,255,0.04); color: var(--ink); font-size: 0.82rem; font-weight: 700;
+}
+body.light .arch-node { background: #ffffff; }
+.arch-node.door { border-color: var(--accent); }
+.arch-node.core { border-color: var(--green); background: rgba(52, 211, 153, 0.1); font-size: 1rem; padding: 12px 22px; }
+.arch-node:hover { border-color: var(--amber); }
+.arch-arrow { color: var(--muted); font-size: 1rem; line-height: 1; }
+.arch-detail { min-height: 74px; }
+
+/* Code */
+.codewalk { display: flex; flex-direction: column; gap: 8px; }
+.code {
+  margin: 0; padding: 13px 14px; border-radius: 12px; overflow: auto;
+  background: #070f1d; border: 1px solid #23324a; color: #e2e8f0;
+  font-family: var(--mono); font-size: clamp(0.62rem, 0.82vw, 0.78rem); line-height: 1.55;
+  max-height: 44vh;
+}
+body.light .code { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+.code .line { display: block; padding-left: 32px; position: relative; white-space: pre; border-left: 2px solid transparent; }
+.code .line::before {
+  content: attr(data-line); position: absolute; left: 0; width: 24px; text-align: right;
+  color: #64748b; font-size: 0.9em;
+}
+.code .line.hl { background: rgba(34, 211, 238, 0.16); border-left-color: var(--cyan); }
+.code .line.dim { opacity: 0.35; }
+.code .kw { color: #c084fc; }
+.code .str { color: #86efac; }
+.code .num { color: #fcd34d; }
+.code .com { color: #94a3b8; font-style: italic; }
+.code .fn { color: #67e8f9; }
+.code-ui { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.explain { font-size: 0.82rem; color: var(--muted); line-height: 1.45; min-height: 40px; flex: 1 1 240px; }
+.code-compare .code { max-height: none; }
+
+/* Dealer demo */
+.dealer-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dealer-log { font-size: 0.8rem; color: var(--muted); min-height: 56px; display: flex; flex-direction: column; gap: 3px; }
+.dealer-log .hit { color: var(--amber); }
+.dealer-log .stand { color: var(--green); }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.toggle button { border: 0; background: transparent; color: var(--muted); padding: 5px 10px; font-size: 0.75rem; font-weight: 700; }
+.toggle button.on { background: var(--accent); color: #04121f; }
+
+/* Payout */
+.slider { width: 100%; accent-color: var(--accent); }
+.payout-result { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.payout-result .box { flex: 1 1 110px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+.payout-result .box .k { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.payout-result .box .v { font-size: 1.25rem; font-weight: 800; }
+.formula { font-family: var(--mono); font-size: 0.8rem; color: var(--cyan); }
+
+/* Split */
+.split-hands { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.split-hand { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: rgba(255,255,255,0.03); }
+body.light .split-hand { background: #f8fafc; }
+.split-hand .meta { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-bottom: 6px; }
+.split-hand .result { font-size: 0.78rem; font-weight: 700; margin-top: 6px; }
+
+/* Strategy */
+.strategy-layout { align-items: start; }
+.selectors { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.selectors select {
+  background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 9px; padding: 6px 8px; font-size: 0.8rem;
+}
+body.light .selectors select { background: #ffffff; }
+.action-badge {
+  margin: 10px 0; border-radius: 12px; padding: 10px 14px; border: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+}
+.action-badge .act { font-size: clamp(1.1rem, 1.6vw, 1.5rem); font-weight: 800; text-transform: uppercase; }
+.action-badge .why { font-size: 0.76rem; color: var(--muted); text-align: right; max-width: 55%; }
+.strategy-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.tab {
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+  border-radius: 999px; padding: 5px 10px; font-size: 0.72rem; font-weight: 700;
+}
+.tab.on { background: var(--accent); color: #04121f; border-color: transparent; }
+.strategy-grid { display: grid; grid-template-columns: 44px repeat(10, 1fr); gap: 3px; font-size: clamp(0.55rem, 0.72vw, 0.7rem); }
+.sg-head, .sg-row, .sg-cell { text-align: center; padding: 3px 2px; border-radius: 4px; }
+.sg-head { color: var(--muted); font-weight: 700; }
+.sg-row { color: var(--muted); font-weight: 700; text-align: right; padding-right: 5px; }
+.sg-cell { background: rgba(255,255,255,0.05); color: var(--ink); font-weight: 700; }
+body.light .sg-cell { background: #eef2f7; }
+.sg-cell.hit { background: rgba(251, 113, 133, 0.22); }
+.sg-cell.stand { background: rgba(52, 211, 153, 0.22); }
+.sg-cell.double { background: rgba(34, 211, 238, 0.22); }
+.sg-cell.split { background: rgba(251, 191, 36, 0.24); }
+.sg-cell.surrender { background: rgba(167, 139, 250, 0.24); }
+.sg-cell.active { outline: 2px solid var(--ink); outline-offset: 1px; transform: scale(1.05); }
+.sg-cell.hover { outline: 1px solid var(--accent); }
+
+/* Mosaic */
+.mosaic { display: grid; grid-template-columns: repeat(32, 1fr); gap: 3px; margin: 12px 0; }
+.mosaic i { aspect-ratio: 1; border-radius: 2px; background: var(--green); opacity: 0.85; display: block; }
+.big-stat { font-size: clamp(2.4rem, 5vw, 4.6rem); font-weight: 800; line-height: 1; color: var(--green); }
+.big-stat span { font-size: 0.35em; color: var(--muted); font-weight: 700; }
+
+/* Tabs and charts */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.chart-panel { min-height: 300px; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; font-size: 0.76rem; color: var(--muted); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.chart-tip {
+  position: absolute; pointer-events: none; background: #0b1424; color: #f8fafc;
+  border: 1px solid #334155; border-radius: 8px; padding: 6px 8px; font-size: 0.72rem;
+  transform: translate(-50%, -110%); opacity: 0; transition: opacity 80ms; white-space: nowrap; z-index: 5;
+}
+body.light .chart-tip { background: #0f172a; color: #f8fafc; }
+.chart-wrap { position: relative; }
+.range-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 6px 0 4px; }
+.range-row input[type="range"] { flex: 1 1 200px; accent-color: var(--accent); }
+.check { display: inline-flex; align-items: center; gap: 5px; font-size: 0.76rem; color: var(--muted); }
+.check input { accent-color: var(--accent); }
+
+/* Heatmap */
+.heatmap-wrap { position: relative; }
+.hm-grid { display: grid; grid-template-columns: 34px repeat(10, 1fr); gap: 2px; font-size: clamp(0.5rem, 0.65vw, 0.62rem); }
+.hm-label { color: var(--muted); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.hm-cell { aspect-ratio: 1.35; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: #0f172a; font-weight: 700; cursor: crosshair; }
+.hm-cell.empty { background: #1e293b; color: #64748b; }
+.legend-bar { height: 8px; border-radius: 999px; background: linear-gradient(90deg, #ef4444, #1e293b, #22c55e); margin: 8px 0 4px; }
+
+/* Leaderboard */
+.bot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bot-card { border: 1px solid var(--line); border-radius: 12px; padding: 9px 10px; background: rgba(255,255,255,0.03); }
+body.light .bot-card { background: #f8fafc; }
+.bot-card .name { font-size: 0.82rem; font-weight: 800; }
+.bot-card .rule { font-size: 0.7rem; color: var(--muted); line-height: 1.35; margin-top: 3px; }
+.bot-card .tag { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 5px; }
+
+/* Terminal */
+.terminal { background: #050b14; border: 1px solid #23324a; border-radius: 12px; padding: 14px; font-family: var(--mono); font-size: 0.74rem; line-height: 1.65; color: #e2e8f0; }
+.terminal .prompt { color: #67e8f9; }
+.terminal .ok { color: #86efac; }
+.terminal .dim { color: #94a3b8; }
+
+/* Timeline and roles */
+.timeline { display: flex; gap: 0; align-items: center; justify-content: space-between; margin-top: 4px; }
+.timeline .step { flex: 1; text-align: center; position: relative; padding-top: 18px; font-size: 0.72rem; color: var(--muted); }
+.timeline .step::before { content: ""; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.timeline .step::after { content: ""; position: absolute; top: 8px; left: 50%; width: 100%; height: 2px; background: var(--line); z-index: -1; }
+.timeline .step:last-child::after { display: none; }
+.role { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: rgba(255,255,255,0.03); }
+body.light .role { background: #ffffff; }
+.role .rnum { font-size: 0.68rem; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; }
+.role h3 { margin: 5px 0 4px; }
+.role p { font-size: 0.78rem; }
+.role .handoff { font-size: 0.68rem; color: var(--muted); margin-top: 8px; border-top: 1px solid var(--line); padding-top: 6px; }
+
+/* Tier cards */
+.tier-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.weight { font-size: 1.35rem; font-weight: 800; color: var(--accent); }
+.tier ul { margin: 6px 0 8px 18px; padding: 0; }
+.tier li { font-size: 0.82rem; margin: 4px 0; }
+.evidence { border-top: 1px solid var(--line); padding-top: 7px; font-size: 0.74rem; color: var(--green); font-weight: 700; }
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.checklist li { font-size: 0.82rem; color: var(--muted); }
+.checklist li::before { content: "✓"; color: var(--green); font-weight: 800; margin-right: 7px; }
+
+/* Notes, overview, help */
+.notes { display: none; }
+#notesPanel {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: #050b14; color: #e2e8f0; border-top: 1px solid #334155;
+  padding: 14px 22px 18px; max-height: 38vh; overflow: auto; display: none;
+}
+body.light #notesPanel { background: #0f172a; color: #e2e8f0; }
+#notesPanel.open { display: block; }
+#notesPanel h4 { margin: 0 0 6px; color: #67e8f9; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; }
+#notesPanel p { font-size: 0.82rem; line-height: 1.55; color: #e2e8f0; margin: 0 0 6px; }
+#overview { position: fixed; inset: 0; z-index: 50; background: #040912; display: none; padding: 4vh 4vw; overflow: auto; }
+#overview.open { display: block; }
+#overview h3 { color: #f8fafc; margin-bottom: 14px; }
+#overviewGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.ov-card { text-align: left; border: 1px solid #334155; border-radius: 10px; padding: 10px; background: #0b1424; color: #e2e8f0; }
+.ov-card .num { font-size: 0.65rem; color: #67e8f9; letter-spacing: 0.1em; }
+.ov-card .ttl { font-size: 0.78rem; font-weight: 700; margin-top: 3px; }
+#help { position: fixed; inset: 0; z-index: 60; background: #040912; display: none; align-items: center; justify-content: center; padding: 5vh; }
+#help.open { display: flex; }
+#help .panel { max-width: 560px; }
+#help kbd { background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 1px 5px; font-family: var(--mono); font-size: 0.78rem; color: #f8fafc; }
+#progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.08); z-index: 30; }
+#progressBar { height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width 180ms ease; }
+#topbar { position: fixed; top: 12px; left: 22px; right: 22px; display: flex; justify-content: space-between; align-items: center; z-index: 25; pointer-events: none; }
+#sectionLabel { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+#timer { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; background: rgba(0,0,0,0.18); }
+#timer.warn { color: var(--amber); border-color: var(--amber); }
+#timer.danger { color: var(--red); border-color: var(--red); }
+#bottombar { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 25; display: flex; align-items: center; gap: 6px; background: rgba(5, 11, 20, 0.72); border: 1px solid var(--line); border-radius: 999px; padding: 5px; backdrop-filter: blur(8px); }
+body.light #bottombar { background: rgba(255,255,255,0.85); }
+#bottombar button { border: 0; background: transparent; color: var(--muted); padding: 5px 9px; border-radius: 999px; font-size: 0.72rem; }
+#bottombar button:hover { color: var(--ink); background: rgba(255,255,255,0.08); }
+#counter { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); min-width: 48px; text-align: center; }
+#toast { position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%); background: #0b1424; border: 1px solid #334155; color: #f8fafc; padding: 7px 14px; border-radius: 999px; font-size: 0.75rem; opacity: 0; transition: opacity 180ms; z-index: 45; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* Table helper */
+.table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.table th, .table td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; color: var(--muted); }
+.table th { color: var(--ink); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.table td:last-child, .table th:last-child { text-align: right; }
+.table tr:last-child td { border-bottom: 0; }
+
+@media (max-width: 900px) {
+  .slide { padding: 3vh 4vw 8vh; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .hero-cards { display: none; }
+  .mosaic { grid-template-columns: repeat(15, 1fr); }
+  #overviewGrid { grid-template-columns: repeat(2, 1fr); }
+  .strategy-layout { grid-template-columns: 1fr; }
+}
+@media (max-height: 700px) {
+  .slide-inner { gap: 1.1vh; }
+  h2 { font-size: clamp(1.45rem, 2.6vw, 2.3rem); }
+  p, li { font-size: 0.9rem; }
+  .code { max-height: 38vh; }
+}
+
+/* Added component styles */
+.qcard.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
+.arch-node.active { border-color: var(--amber); background: rgba(251, 191, 36, 0.12); }
+.mini-table { display: flex; flex-direction: column; gap: 10px; }
+.mini-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.mini-row:last-child { border-bottom: 0; }
+.mini-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); min-width: 58px; }
+.mini-total { font-size: 1.1rem; font-weight: 800; color: var(--ink); min-width: 46px; text-align: right; }
+.mini-status { font-size: 0.78rem; color: var(--muted); min-height: 34px; }
+.state-map { display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; min-height: 320px; }
+.state-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.state-box { border: 1px solid var(--line); border-radius: 11px; padding: 9px 13px; font-size: 0.8rem; font-weight: 800; color: var(--ink); background: rgba(255,255,255,0.04); }
+body.light .state-box { background: #f8fafc; }
+.state-box.active { border-color: var(--accent); background: rgba(34,211,238,0.12); }
+.state-box.green { border-color: var(--green); background: rgba(52,211,153,0.12); }
+.state-arrow { color: var(--muted); font-size: 1rem; }
+.state-note { font-size: 0.72rem; color: var(--muted); text-align: center; max-width: 340px; line-height: 1.4; }
+.ace-stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.ace-stats .stat { flex: 1 1 80px; min-width: 70px; }
+.ace-note { font-size: 0.78rem; color: var(--muted); min-height: 38px; }
+.payout-table { display: flex; flex-direction: column; gap: 5px; }
+.payout-row { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding: 6px 0; font-size: 0.8rem; color: var(--muted); }
+.payout-row b { color: var(--ink); }
+.shoe-track { position: relative; height: 28px; border-radius: 999px; background: #1e293b; overflow: hidden; margin: 10px 0 14px; border: 1px solid var(--line); }
+.shoe-fill { height: 100%; background: linear-gradient(90deg, #0e7490, #22d3ee); transition: width 160ms ease; }
+.shoe-cutmark { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--amber); box-shadow: 0 0 0 2px rgba(251,191,36,0.2); }
+.shoe-labels { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--muted); margin-top: -8px; }
+.count-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.count-big { font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 800; line-height: 1; }
+.count-tag { display: inline-flex; gap: 6px; align-items: center; font-size: 0.72rem; color: var(--muted); }
+.count-tag b { color: var(--ink); }
+.mc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.kbd { background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 1px 6px; font-family: var(--mono); font-size: 0.78rem; color: #f8fafc; }
+.strategy-grid { max-height: 46vh; overflow: auto; grid-auto-rows: minmax(17px, auto); padding-right: 2px; }
+.sg-cell { cursor: pointer; }
+.hm-cell { cursor: crosshair; }
+#riskPanel { min-height: 360px; }
+#riskCaption { min-height: 34px; margin-top: 6px; }
+.bot-grid { align-content: start; }
+.role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 900px) {
+  .role-grid, .mc-stats, .qa-grid { grid-template-columns: 1fr 1fr; }
+  .count-grid { grid-template-columns: 1fr; }
+}
+
+/* Layout fixes */
+.title-slide h1 { max-width: 900px; }
+.title-slide .lede { max-width: 760px; }
+.state-box { font-size: 0.95rem; padding: 12px 18px; }
+.state-map { min-height: 360px; }
+.stat-row.four { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stat-row.four .stat { min-width: 0; padding: 8px 9px; }
+.stat-row.four .big { font-size: 1.35rem; }
+.stat-row.two { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.stat-row.two .stat { min-width: 0; }
+.timeline { position: relative; }
+.timeline::before { content: ""; position: absolute; top: 8px; left: 6%; right: 6%; height: 2px; background: var(--line); }
+.timeline .step::after { display: none; }
+
+@media (max-width: 900px) {
+  .stat-row.four, .stat-row.two { grid-template-columns: repeat(2, 1fr); }
+  .title-slide h1, .title-slide .lede { max-width: 100%; }
+}
+
+/* Motion and depth */
+#deck { z-index: 1; }
+.aurora {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  width: 62vw;
+  height: 62vw;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.2;
+}
+.aurora::before {
+  background: radial-gradient(circle, #22d3ee, transparent 65%);
+  top: -22%;
+  right: -12%;
+  animation: driftA 20s ease-in-out infinite alternate;
+}
+.aurora::after {
+  background: radial-gradient(circle, #34d399, transparent 65%);
+  bottom: -28%;
+  left: -18%;
+  animation: driftB 24s ease-in-out infinite alternate;
+}
+body.light .aurora::before,
+body.light .aurora::after { opacity: 0.12; }
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+}
+body.light::after { opacity: 0.18; }
+@keyframes driftA {
+  to { transform: translate3d(-9vw, 7vh, 0) scale(1.12); }
+}
+@keyframes driftB {
+  to { transform: translate3d(11vw, -6vh, 0) scale(1.18); }
+}
+.slide {
+  transition: opacity 380ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 380ms;
+}
+.slide.active .slide-inner > * {
+  animation: riseIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.slide.active .slide-inner > *:nth-child(2) { animation-delay: 40ms; }
+.slide.active .slide-inner > *:nth-child(3) { animation-delay: 80ms; }
+.slide.active .slide-inner > *:nth-child(4) { animation-delay: 120ms; }
+.slide.active .slide-inner > *:nth-child(5) { animation-delay: 160ms; }
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pcard {
+  animation: cardIn 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(-10px) rotate(-3deg) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+.hero-cards .pcard { animation: none; }
+
+@media (max-width: 700px) {
+  .slide {
+    overflow-y: auto;
+    align-items: flex-start;
+    padding: 7vh 5vw 12vh;
+  }
+  h1 { font-size: clamp(2rem, 11vw, 3.2rem); }
+  h2 { font-size: clamp(1.5rem, 8vw, 2.3rem); }
+  .grid-2, .grid-3, .grid-4, .role-grid, .mc-stats, .qa-grid { grid-template-columns: 1fr; }
+  .stat-row.four, .stat-row.two { grid-template-columns: 1fr 1fr; }
+  .hero-cards { display: none; }
+  .title-meta { gap: 8px 14px; }
+  .strategy-grid { max-height: none; overflow: visible; }
+  #bottombar { max-width: calc(100vw - 16px); overflow-x: auto; }
+  #bottombar button { padding: 5px 7px; white-space: nowrap; }
+  #topbar { left: 14px; right: 14px; }
+}
+
+@media (max-width: 700px) {
+  .strategy-grid {
+    grid-template-columns: 26px repeat(10, minmax(0, 1fr));
+    font-size: 0.5rem;
+    gap: 2px;
+  }
+  .sg-head, .sg-row, .sg-cell { padding: 2px 0; }
+  .sg-row { padding-right: 2px; }
+  .action-badge { flex-direction: column; align-items: flex-start; }
+  .action-badge .why { text-align: left; max-width: 100%; }
+}
+
+.grid-2 > *, .codewalk, .strategy-layout > * { min-width: 0; }
+.code { max-width: 100%; min-width: 0; }
+@media (max-width: 700px) {
+  .mc-stats { grid-template-columns: 1fr 1fr; }
+  .chart-wrap, .heatmap-wrap, #riskPanel, #leaderboardChart { overflow-x: auto; }
+  .chart { min-width: 700px; }
+  .heatmap-wrap .chart { min-width: 900px; }
+  #shoeDemo > .btn-row:first-child { flex-wrap: wrap; gap: 8px; }
+  #shoeDemo > .btn-row:first-child label { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  #shoePen { width: 100%; }
+}
+
+.slide-inner > * { flex-shrink: 0; }
+@media (max-width: 700px) {
+  .slide-inner { max-height: none; justify-content: flex-start; }
+}
+
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+<div id="progress"><div id="progressBar"></div></div>
+<div id="topbar">
+  <div id="sectionLabel"></div>
+  <div id="timer" title="Click or press T to pause">15:00 left</div>
+</div>
+<main id="deck">
+<section class="slide title-slide" data-section="Opening" data-title="Blackjack: from a deck of cards to a Monte Carlo lab">
+  <div class="slide-inner">
+    <div class="kicker">PROG1301 · Group project</div>
+    <h1>Blackjack<span class="accent">.</span><br>From a deck of cards to a Monte Carlo lab.</h1>
+    <p class="lede">A playable table, a strategy engine, a card counter, and 513 tests that keep the math honest.</p>
+    <div class="title-meta">
+      <span>Use ← → or Space</span>
+      <span>Every demo is live</span>
+      <span>Press ? for controls</span>
+    </div>
+    <div class="hero-cards" aria-hidden="true">
+      <div class="pcard c1"><span>A</span><span class="suit">♠</span></div>
+      <div class="pcard c2 red"><span>K</span><span class="suit">♥</span></div>
+      <div class="pcard c3 red"><span>9</span><span class="suit">♦</span></div>
+      <div class="pcard c4"><span>7</span><span class="suit">♣</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Good morning. Our project is a blackjack simulator that starts as a playable game and grows into a simulation lab. The question we kept asking was simple: can a card game be a serious programming project? The answer is yes, if you treat the rules as an engine and the game as a set of experiments.</p>
+    <p>I will show you the engine, the tests, the strategy chart, the counting system and the Monte Carlo results. The deck is interactive, so click the demos when they appear. We have about fifteen minutes.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="The hook" data-title="Three questions a card game can answer">
+  <div class="slide-inner">
+    <div class="kicker">01 · The hook</div>
+    <h2>Three questions a card game can answer.</h2>
+    <div class="grid-3">
+      <button class="qcard" data-answer="About 0.4% on the flat game. Small enough to feel fair, large enough to pay the casino.">
+        <div class="qnum">Question 1</div>
+        <strong>What is the house edge, really?</strong>
+        <span>Everyone knows the casino wins. By how much, and why?</span>
+      </button>
+      <button class="qcard" data-answer="Yes, with a bet spread. Across 300,000-hand runs, the flat game paid the house 0.35%; the Hi-Lo spread returned 0.48% to the player.">
+        <div class="qnum">Question 2</div>
+        <strong>Does card counting still work?</strong>
+        <span>Or is that just a trick from the movies?</span>
+      </button>
+      <button class="qcard" data-answer="Not the martingale. It can win a short session, then the table limit or the bankroll ends it.">
+        <div class="qnum">Question 3</div>
+        <strong>Which betting system survives?</strong>
+        <span>Flat, martingale, count spread or Kelly?</span>
+      </button>
+    </div>
+    <div class="answer-strip" id="qAnswer">Click a question. The rest of the talk is the evidence.</div>
+    <div class="btn-row"><button class="btn small ghost" id="revealAll">Reveal all three</button></div>
+  </div>
+  <aside class="notes">
+    <p>Three questions frame the whole project. First, what is the house edge, really? Everyone knows the casino wins, but by how much, and why? Second, does card counting still work, or is that a movie trick? Third, which betting system survives?</p>
+    <p>We built the engine so we could answer these with numbers instead of opinions. Click a card to see the short answer. The rest of the talk is the evidence.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Rules" data-title="Blackjack in sixty seconds">
+  <div class="slide-inner">
+    <div class="kicker">02 · The game</div>
+    <h2>Blackjack in sixty seconds.</h2>
+    <div class="grid-2">
+      <div class="grid-2" style="grid-template-columns:1fr 1fr;">
+        <div class="panel tight"><h3>21 wins</h3><p class="small">Get closer to 21 than the dealer without going over.</p></div>
+        <div class="panel tight"><h3>Aces are 1 or 11</h3><p class="small">The hand picks whichever value does not bust.</p></div>
+        <div class="panel tight"><h3>Dealer to 17</h3><p class="small">Hits below 17. Stands on soft 17.</p></div>
+        <div class="panel tight"><h3>Blackjack pays 3:2</h3><p class="small">A win pays 1:1. A natural pays 1.5x.</p></div>
+      </div>
+      <div class="panel mini-table" id="miniTable">
+        <div class="mini-row">
+          <span class="mini-label">Dealer</span>
+          <div class="hand-row small" id="miniDealer"></div>
+          <span class="mini-total" id="miniDealerTotal">?</span>
+        </div>
+        <div class="mini-row">
+          <span class="mini-label">You</span>
+          <div class="hand-row small" id="miniPlayer"></div>
+          <span class="mini-total" id="miniPlayerTotal">—</span>
+        </div>
+        <div class="mini-status" id="miniStatus">Deal a hand.</div>
+        <div class="btn-row">
+          <button class="btn primary" id="miniDeal">Deal</button>
+          <button class="btn" id="miniHit">Hit</button>
+          <button class="btn" id="miniStand">Stand</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Blackjack is simple to explain. Get closer to 21 than the dealer without going over. Aces are one or eleven. The dealer hits until 17 and stands on soft 17. A blackjack pays 3:2.</p>
+    <p>Click Deal. The demo shows the player and the dealer, with the hole card hidden. Hit adds a card, Stand reveals the dealer and plays it out. This is the same information the engine sees.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Application flow" data-title="Every hand follows the same seven steps">
+  <div class="slide-inner">
+    <div class="kicker">03 · The flow</div>
+    <h2>Every hand follows the same seven steps.</h2>
+    <div class="flow" id="flow"></div>
+    <div class="panel flow-detail" id="flowDetail"></div>
+    <p class="small">Click a step. The function name is what you would find in <span class="mono">engine.py</span>.</p>
+  </div>
+  <aside class="notes">
+    <p>Every hand follows the same seven steps. The bet is validated and deducted. The shoe deals. The engine offers insurance and checks for naturals. The player acts. The dealer plays only if a hand is still live. Settlement pays each hand. The result is recorded for analytics.</p>
+    <p>Click any step to see the function that owns it. The UI never decides a rule. It asks the engine for the legal actions and then calls act.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Architecture" data-title="Three front doors, one engine">
+  <div class="slide-inner">
+    <div class="kicker">04 · Architecture</div>
+    <h2>Three front doors. One engine.</h2>
+    <div class="arch">
+      <div class="arch-row">
+        <button class="arch-node door" data-key="cli">CLI · Rich table</button>
+        <button class="arch-node door" data-key="notebook">Notebook · 32 cells</button>
+        <button class="arch-node door" data-key="tests">Tests · 513</button>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <button class="arch-node core" data-key="engine">BlackjackGame · rules engine</button>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-row">
+        <button class="arch-node" data-key="cards">cards</button>
+        <button class="arch-node" data-key="hand">hand</button>
+        <button class="arch-node" data-key="rules">rules</button>
+        <button class="arch-node" data-key="strategy">strategy</button>
+        <button class="arch-node" data-key="counting">counting</button>
+        <button class="arch-node" data-key="analytics">analytics</button>
+        <button class="arch-node" data-key="bots">bots</button>
+        <button class="arch-node" data-key="simulation">simulation</button>
+        <button class="arch-node" data-key="charts">charts</button>
+      </div>
+    </div>
+    <div class="panel arch-detail" id="archDetail"></div>
+  </div>
+  <aside class="notes">
+    <p>The repo has three front doors. The CLI, the notebook and the tests. All three point at the same BlackjackGame. Under it are the modules: cards, hands, rules, strategy, counting, analytics, bots, simulation and charts.</p>
+    <p>Click any module to see its job. This is why the notebook can demo the project without duplicating it, and why a bug fixed in the engine is fixed everywhere.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Data model" data-title="The hardest rule is the ace">
+  <div class="slide-inner">
+    <div class="kicker">05 · Data model</div>
+    <h2>The hardest rule in the game is the ace.</h2>
+    <div class="grid-2">
+      <div class="codewalk" data-steps='[
+        {"lines":[1,2,3,4],"text":"Start by counting every ace as one. This total can never bust, so it is a safe floor."},
+        {"lines":[5,6],"text":"If there is an ace and ten more points still fit, use one ace as eleven. That is the soft total."},
+        {"lines":[7,8],"text":"Return the best total. The property recomputes after every card, so a soft hand can become hard."},
+        {"lines":[10,11,12],"text":"A hand is soft when the best total is higher than the all-aces-are-one total."}
+      ]'>
+        <pre class="code" data-lang="python">
+@property
+def total(self) -> int:
+    total = sum(card.base_value for card in self.cards)
+    if any(card.is_ace for card in self.cards) and total + 10 <= 21:
+        return total + 10
+    return total
+
+@property
+def is_soft(self) -> bool:
+    return self.total != self.hard_total
+        </pre>
+        <div class="code-ui">
+          <button class="btn small next">Next line</button>
+          <div class="explain"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Ace builder</h3>
+        <div class="hand-row small" id="aceHand"></div>
+        <div class="ace-stats">
+          <div class="stat"><div class="label">Total</div><div class="big" id="aceTotal">—</div></div>
+          <div class="stat"><div class="label">Type</div><div class="big" id="aceSoft">Add a card</div></div>
+        </div>
+        <div class="ace-note" id="aceNote"></div>
+        <div class="btn-row" id="aceButtons"></div>
+        <div class="btn-row" style="margin-top:8px"><button class="btn small ghost" id="aceReset">Reset</button></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>The ace is the hardest rule in the game. Every ace starts as one. Then the hand checks whether one ace can be eleven without busting. If it can, add ten. That is why ace-six is a soft seventeen, and ace-six-ten is a hard seventeen.</p>
+    <p>Click the card buttons on the right to build a hand. Watch the soft flag change. The code on the left is the whole rule.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Engine" data-title="The engine is a small state machine">
+  <div class="slide-inner">
+    <div class="kicker">06 · Engine</div>
+    <h2>The engine is a small state machine.</h2>
+    <div class="grid-2">
+      <div class="state-map panel">
+        <div class="small" style="letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);font-weight:700;">Round lifecycle</div>
+        <div class="state-row">
+          <div class="state-box">IDLE</div>
+          <span class="state-arrow">→</span>
+          <div class="state-box">INSURANCE</div>
+          <span class="state-arrow">→</span>
+          <div class="state-box active">PLAYER</div>
+          <span class="state-arrow">→</span>
+          <div class="state-box green">SETTLED</div>
+        </div>
+        <div class="state-note">Insurance branches off the deal only when the dealer shows an ace. Naturals can jump straight to SETTLED.</div>
+        <div class="state-note">The state machine is why the CLI cannot ask for a double after a hit, or a surrender after a split.</div>
+      </div>
+      <div class="codewalk" data-steps='[
+        {"lines":[1,2,3],"text":"Only the PLAYER state accepts actions. Everything else raises."},
+        {"lines":[4,5,6,7],"text":"Ask the engine for the legal action list. If the action is not in it, reject the move."},
+        {"lines":[9,10,11,12,13,14],"text":"Hit mutates only the current hand. Bust or 21 finishes it."},
+        {"lines":[15,16,17],"text":"Stand finishes the hand, then _advance moves to the next unfinished split hand."}
+      ]'>
+        <pre class="code" data-lang="python">
+def act(self, action: str) -> None:
+    if self.state is not GameState.PLAYER:
+        raise RuntimeError("The table is not accepting actions")
+    available = self.available_actions()
+    if action not in available:
+        raise ValueError(f"Illegal action {action!r}")
+
+    hand = self.player_hand
+
+    if action == "hit":
+        hand.add(self._draw())
+        if hand.is_bust or hand.total == 21:
+            hand.stood = True
+        self._advance()
+    elif action == "stand":
+        hand.stood = True
+        self._advance()
+        </pre>
+        <div class="code-ui">
+          <button class="btn small next">Next line</button>
+          <div class="explain"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>The engine is a small state machine. IDLE, INSURANCE, PLAYER, SETTLED. A hand can only start from IDLE or SETTLED. Player actions are only accepted in PLAYER.</p>
+    <p>The code first checks the legal action list, then mutates only the current hand, then advances to the next unfinished hand. That guard is why the CLI cannot ask for an illegal move. Click Next line to walk through it.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Dealer" data-title="The dealer is a policy, not a personality">
+  <div class="slide-inner">
+    <div class="kicker">07 · Dealer</div>
+    <h2>The dealer is a policy, not a personality.</h2>
+    <div class="grid-2">
+      <div class="panel" id="dealerDemo">
+        <div class="dealer-top">
+          <div class="toggle"><button id="dealerS17" class="on">S17</button><button id="dealerH17">H17</button></div>
+          <span class="chip">Dealer policy</span>
+        </div>
+        <div class="hand-row" id="dealerCards"></div>
+        <div class="stat-row" style="margin:8px 0;">
+          <div class="stat"><div class="label">Total</div><div class="big" id="dealerTotal">17 soft</div></div>
+          <div class="stat"><div class="label">Decision</div><div class="big" id="dealerDecision">Stand</div></div>
+        </div>
+        <div class="dealer-log" id="dealerLog"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="dealerDeal">Deal a card</button>
+          <button class="btn" id="dealerAuto">Auto play</button>
+          <button class="btn ghost" id="dealerReset">Reset</button>
+        </div>
+      </div>
+      <div class="codewalk" data-steps='[
+        {"lines":[1,2,3],"text":"The dealer keeps drawing while the total is below 17."},
+        {"lines":[4,5,6,7,8],"text":"On 17, the soft flag matters. S17 stands. H17 draws."},
+        {"lines":[9,10],"text":"Anything else stands. That is the whole dealer."}
+      ]'>
+        <pre class="code" data-lang="python">
+def _dealer_play(self) -> None:
+    while True:
+        total = self.dealer.total
+        if total < 17:
+            self.dealer.add(self._draw())
+        elif total == 17 and self.dealer.is_soft and self.rules.dealer_hits_soft_17:
+            self.dealer.add(self._draw())
+        else:
+            return
+        </pre>
+        <div class="code-ui">
+          <button class="btn small next">Next line</button>
+          <div class="explain"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>The dealer is a policy, not a personality. Draw below seventeen. Stand on soft seventeen. If the H17 rule is on, hit soft seventeen.</p>
+    <p>The demo starts with ace-six. In S17 the dealer stands. Toggle H17 and deal a card, and the dealer hits. This is deterministic, which is exactly what makes it testable. The tests stack the shoe with exact cards and check both rules.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Money" data-title="Every payout is a formula">
+  <div class="slide-inner">
+    <div class="kicker">08 · Money</div>
+    <h2>Every payout is a formula, not a feeling.</h2>
+    <div class="grid-2">
+      <div class="panel" id="payoutCalc">
+        <div class="btn-row" style="justify-content:space-between;">
+          <span class="small">Bet size</span><b id="payBetLabel">$25</b>
+        </div>
+        <input class="slider" id="payBet" type="range" min="5" max="500" step="5" value="25">
+        <div class="btn-row" style="margin:10px 0;">
+          <button class="btn small primary" data-outcome="blackjack">Blackjack</button>
+          <button class="btn small" data-outcome="win">Win</button>
+          <button class="btn small" data-outcome="push">Push</button>
+          <button class="btn small" data-outcome="loss">Loss</button>
+          <button class="btn small" data-outcome="surrender">Surrender</button>
+          <button class="btn small" data-outcome="insurance">Insurance</button>
+        </div>
+        <div class="payout-result">
+          <div class="box"><div class="k">Stake</div><div class="v" id="payStake">$25</div></div>
+          <div class="box"><div class="k">Returned</div><div class="v" id="payReturn">$62</div></div>
+          <div class="box"><div class="k">Profit</div><div class="v" id="payProfit">+$37</div></div>
+        </div>
+        <div class="small" id="payOutcomeLabel" style="margin-top:8px;">Blackjack</div>
+        <p class="small" style="margin-top:10px;">The stake is deducted when the hand starts. Every payout credits the bankroll and writes one HandResult. The analytics layer only reads those records.</p>
+      </div>
+      <div>
+        <div class="panel tight">
+          <div class="payout-table">
+            <div class="payout-row"><span>Blackjack</span><b>stake + 1.5x</b></div>
+            <div class="payout-row"><span>Win</span><b>stake + 1x</b></div>
+            <div class="payout-row"><span>Push</span><b>stake back</b></div>
+            <div class="payout-row"><span>Loss</span><b>nothing</b></div>
+            <div class="payout-row"><span>Surrender</span><b>half the stake</b></div>
+            <div class="payout-row"><span>Insurance</span><b>3x the half-unit stake</b></div>
+          </div>
+        </div>
+        <pre class="code" data-lang="python" style="margin-top:10px;">
+if hand.is_blackjack:
+    payout = bet * (1 + self.rules.blackjack_payout)
+elif self.dealer.is_bust or hand.total > dealer_total:
+    payout = bet * 2
+elif hand.total == dealer_total:
+    payout = bet
+        </pre>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Every payout is a formula. A win returns the stake plus the same amount. A blackjack returns the stake plus one and a half times the stake. A push returns the stake. A loss returns nothing. A surrender returns half. Insurance is a separate half-unit bet that pays two to one.</p>
+    <p>Move the slider and click an outcome. The key accounting rule is that total_wagered includes doubles, splits and insurance, so house edge is net divided by all money at risk.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Advanced actions" data-title="A split is two hands with two wallets">
+  <div class="slide-inner">
+    <div class="kicker">09 · Advanced actions</div>
+    <h2>A split is two hands with two wallets.</h2>
+    <div class="grid-2">
+      <div class="panel" id="splitDemo">
+        <div class="split-hands">
+          <div class="split-hand" id="splitHand1"></div>
+          <div class="split-hand" id="splitHand2"></div>
+        </div>
+        <div class="small" id="splitNote" style="margin:10px 0; min-height:38px;"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="splitNext">Next step</button>
+          <button class="btn ghost" id="splitReset">Reset</button>
+          <span class="chip" id="splitStep">1 / 6</span>
+        </div>
+      </div>
+      <div class="codewalk" data-steps='[
+        {"lines":[1,2,3],"text":"Remove the second card and make a new Hand. It carries its own bet and split flag."},
+        {"lines":[5,6,7,8],"text":"Post a second bet, deal one card to each hand, and insert the new hand after the current one."},
+        {"lines":[10,11],"text":"Split aces get one card and stand. Everything else advances normally."}
+      ]'>
+        <pre class="code" data-lang="python">
+def _split(self, hand: Hand) -> None:
+    second = hand.cards.pop()
+    new_hand = Hand(cards=[second], bet=hand.bet, is_split_hand=True)
+    hand.is_split_hand = True
+
+    self.bankroll -= hand.bet
+    hand.add(self._draw())
+    new_hand.add(self._draw())
+    self.hands.insert(self.current + 1, new_hand)
+
+    if hand.cards[0].is_ace and not self.rules.hit_split_aces:
+        hand.stood = True
+        new_hand.stood = True
+    self._advance()
+        </pre>
+        <div class="code-ui">
+          <button class="btn small next">Next line</button>
+          <div class="explain"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>A split is two hands with two wallets. The second card becomes a new hand, and a second bet is posted. Each hand has its own cards, bet, doubled flag and result.</p>
+    <p>The demo walks through a split of eights. Hand one doubles to twenty-one, hand two stands on ten. The dealer busts. Both win, but the payouts are independent. There is a test that makes one hand win and the other lose, and checks the bankroll nets to zero.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Strategy" data-title="The basic strategy chart is the app's brain">
+  <div class="slide-inner">
+    <div class="kicker">10 · Strategy</div>
+    <h2>The basic strategy chart is the app's brain.</h2>
+    <div class="grid-2 strategy-layout">
+      <div class="panel">
+        <div class="selectors">
+          <select id="sCard1"></select>
+          <select id="sCard2"></select>
+          <span class="small">vs</span>
+          <select id="sDealer"></select>
+          <button class="btn small" id="randomHand">Random</button>
+        </div>
+        <div class="action-badge">
+          <div>
+            <div class="small" id="strategyHandLabel">8 8 vs 9</div>
+            <div class="act" id="strategyAction">Split</div>
+          </div>
+          <div class="why" id="strategyWhy"></div>
+        </div>
+        <div class="strategy-tabs">
+          <button class="tab on" data-cat="hard">Hard</button>
+          <button class="tab" data-cat="soft">Soft</button>
+          <button class="tab" data-cat="pair">Pairs</button>
+        </div>
+        <div class="strategy-grid" id="strategyGrid"></div>
+      </div>
+      <div class="codewalk" data-steps='[
+        {"lines":[1,2,3],"text":"Check the pair chart first. Only a P becomes a split."},
+        {"lines":[5,6],"text":"Late surrender is checked before the total chart, but only for two-card hands."},
+        {"lines":[8,9,10,11,12,13],"text":"Otherwise read the soft or hard table. D means double else hit. Lowercase d means double else stand."}
+      ]'>
+        <pre class="code" data-lang="python">
+if hand.is_pair and can_split:
+    if PAIR_TABLE[hand.pair_rank][column] == "P":
+        return "split"
+
+if can_surrender and _should_surrender(hand, column):
+    return "surrender"
+
+if hand.is_soft:
+    code = SOFT_TABLE.get(hand.total, "SSSSSSSSSS")[column]
+else:
+    code = HARD_TABLE.get(hand.total, "HHHHHHHHHH")[column]
+
+if code == "D":
+    return "double" if can_double else "hit"
+        </pre>
+        <div class="code-ui">
+          <button class="btn small next">Next line</button>
+          <div class="explain"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>The basic strategy chart is the app's brain. Three tables: hard totals, soft totals and pairs. Each row has ten entries, one for dealer two through ace.</p>
+    <p>Pick any two cards and a dealer upcard. The badge shows the optimal action and the grid highlights the cell. If doubling is not allowed, the chart falls back to hit, except soft eighteen, which falls back to stand. That detail is where most simple implementations get it wrong.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Verification" data-title="We tested the chart against an independent chart">
+  <div class="slide-inner">
+    <div class="kicker">11 · Verification</div>
+    <h2>We tested the chart against a second, independent chart.</h2>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="big-stat">376<span> / 376</span></div>
+        <p class="small">Hard totals, soft totals, pairs, and every fallback path.</p>
+        <div class="mosaic" id="testMosaic"></div>
+        <div class="stat-row four">
+          <div class="stat"><div class="label">Hard</div><div class="big">170</div><div class="sub">cases</div></div>
+          <div class="stat"><div class="label">Soft</div><div class="big">90</div><div class="sub">cases</div></div>
+          <div class="stat"><div class="label">Pairs</div><div class="big">100</div><div class="sub">cases</div></div>
+          <div class="stat"><div class="label">Fallbacks</div><div class="big">16</div><div class="sub">cases</div></div>
+        </div>
+      </div>
+      <div class="panel code-compare">
+        <div class="small">The table</div>
+        <pre class="code" data-lang="python" style="margin-top:6px;">
+11: "DDDDDDDDDD"
+16: "SSSSSHHHHH"
+        </pre>
+        <div class="small" style="margin:12px 0 4px;">The independent reference</div>
+        <pre class="code" data-lang="python">
+if total == 11:
+    return "double" if can_double else "hit"
+if total == 16 and dealer in ("9", "10", "A"):
+    return "surrender"
+        </pre>
+        <p class="small" style="margin-top:10px;">The test does not import the table. It re-derives the chart from rules. A typo in a row disagrees with the reference and fails.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>We did not test the chart against itself. The test file has a second, independent implementation written as rules. Then it checks every hard total, every soft total, every pair and every fallback against every dealer card. That is 376 cases.</p>
+    <p>The mosaic is all green because the table and the rules agree. If someone changes a row by mistake, the reference disagrees and the test fails.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Checkpoints 1 and 2" data-title="Rules first, then decisions">
+  <div class="slide-inner">
+    <div class="kicker">12 · Checkpoints 1 and 2</div>
+    <h2>Rules first. Then decisions.</h2>
+    <div class="grid-2">
+      <div class="panel tier">
+        <div class="tier-head"><span class="weight">40%</span><h3>Tier 1 · Basic</h3></div>
+        <ul>
+          <li>Dealing, flexible aces, hit and stand.</li>
+          <li>Dealer S17, automatic settlement and 3:2 blackjack.</li>
+          <li>Bankroll, bet validation and a playable table.</li>
+          <li>pytest invariants and a soft-17 sanity check.</li>
+        </ul>
+        <div class="evidence">80 Tier 1 tests · chip ledger invariant · S17 and H17 cases</div>
+      </div>
+      <div class="panel tier">
+        <div class="tier-head"><span class="weight">20%</span><h3>Tier 2 · Intermediate</h3></div>
+        <ul>
+          <li>Double, split, re-split, surrender, insurance.</li>
+          <li>Full hard, soft and pair strategy chart.</li>
+          <li>House edge, streaks, drawdown and adherence.</li>
+          <li>Split state isolation and payout tracking.</li>
+        </ul>
+        <div class="evidence">376 strategy cases · split payout tests · analytics suite</div>
+      </div>
+    </div>
+    <div class="timeline">
+      <div class="step">Rules engine</div>
+      <div class="step">Actions and payouts</div>
+      <div class="step">Strategy chart</div>
+      <div class="step">Analytics</div>
+      <div class="step">Notebook and visuals</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Checkpoint one was the core game: dealing, aces, hit and stand, dealer S17, payouts and a bankroll UI. Checkpoint two was the advanced layer: double, split, re-split, surrender, insurance, the strategy chart and session analytics.</p>
+    <p>The evidence is on the cards. Eighty Tier 1 tests, 376 strategy cases, and split payout tests that prove independent state. The timeline at the bottom is the order we built it.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Tier 3 · Shoe" data-title="A real shoe has a memory">
+  <div class="slide-inner">
+    <div class="kicker">13 · Tier 3 · Shoe</div>
+    <h2>A real shoe has a memory.</h2>
+    <div class="grid-2">
+      <div class="panel" id="shoeDemo">
+        <div class="btn-row" style="justify-content:space-between;">
+          <label class="small">Decks
+            <select id="shoeDecksSel">
+              <option>1</option><option>2</option><option selected>6</option><option>8</option>
+            </select>
+          </label>
+          <label class="small">Cut card <input id="shoePen" type="range" min="50" max="90" value="75"><b id="shoePenLabel">75%</b></label>
+        </div>
+        <div class="shoe-track">
+          <div class="shoe-fill" id="shoeBar"></div>
+          <div class="shoe-cutmark" id="shoeCut"></div>
+        </div>
+        <div class="shoe-labels"><span>remaining shoe</span><span>discard tray</span></div>
+        <div class="stat-row two" style="margin-top:10px;">
+          <div class="stat"><div class="label">Cards left</div><div class="big" id="shoeRemaining">312</div></div>
+          <div class="stat"><div class="label">Decks left</div><div class="big" id="shoeDecks">6.0</div></div>
+          <div class="stat"><div class="label">Discard</div><div class="big" id="shoeDiscard">0</div></div>
+          <div class="stat"><div class="label">Shuffles</div><div class="big" id="shoeShuffles">0</div></div>
+        </div>
+        <div class="hand-row small" id="shoeLast" style="margin-top:8px;"></div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="btn primary" id="shoeDeal1">Deal 1</button>
+          <button class="btn" id="shoeDeal5">Deal 5</button>
+          <button class="btn ghost" id="shoeShuffle">Shuffle</button>
+          <span class="small" id="shoeStatus">Dealing.</span>
+        </div>
+      </div>
+      <div class="codewalk" data-steps='[
+        {"lines":[1,2,3],"text":"The cut card is a position, not a card. Once enough cards have been dealt, the shoe is finished."},
+        {"lines":[5,6,7,8,9],"text":"At the start of the next hand, the shoe checks the flag and shuffles. The discard tray is emptied."}
+      ]'>
+        <pre class="code" data-lang="python">
+@property
+def needs_shuffle(self) -> bool:
+    return len(self._dealt) >= self.cut_card_index or not self._cards
+
+def shuffle_if_needed(self) -> bool:
+    if self.needs_shuffle:
+        self.shuffle()
+        return True
+    return False
+        </pre>
+        <div class="code-ui">
+          <button class="btn small next">Next line</button>
+          <div class="explain"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>A real shoe has a memory. A multi-deck shoe, a cut card and a discard tray. Change the number of decks or the penetration. Deal cards and watch the shoe shrink. When the cut card is reached, the shoe must be shuffled.</p>
+    <p>The code is two properties. This matters for counting because penetration determines how many decks remain, and decks remaining is the denominator of the true count.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Tier 3 · Counting" data-title="Counting is arithmetic with a memory">
+  <div class="slide-inner">
+    <div class="kicker">14 · Tier 3 · Counting</div>
+    <h2>Counting is just arithmetic with a memory.</h2>
+    <div class="grid-2">
+      <div class="panel" id="countDemo">
+        <div class="count-grid">
+          <div>
+            <div class="small">Last card</div>
+            <div id="countLast" style="margin:6px 0; min-height:96px;"></div>
+            <div class="small" id="countLastLabel">Deal a card</div>
+          </div>
+          <div>
+            <div class="small">Running count</div>
+            <div class="count-big" id="countRunning">0</div>
+            <div class="small" style="margin-top:4px;">True count <b id="countTrue">0.00</b> · <span id="countDecks">2.0</span> decks left</div>
+          </div>
+        </div>
+        <div class="small" style="margin:10px 0 4px;">Suggested bet</div>
+        <div class="btn-row" id="countUnits"></div>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn primary" id="countDeal">Deal a card</button>
+          <button class="btn" id="countHide">Hide count</button>
+          <button class="btn ghost" id="countReset">Reset</button>
+        </div>
+        <div class="count-tag" style="margin-top:10px;"><b>Hi-Lo</b> 2-6 +1 · 7-9 0 · 10-A -1</div>
+      </div>
+      <div class="codewalk" data-steps='[
+        {"lines":[1,2,3,4],"text":"Every card has a tag. The running count is the sum of every tag seen."},
+        {"lines":[6,7,8],"text":"The true count divides by the decks remaining. The half-deck floor stops the number from exploding."}
+      ]'>
+        <pre class="code" data-lang="python">
+def observe(self, card: Card) -> int:
+    self.running_count += card.hi_lo_value
+    self.cards_seen += 1
+    return self.running_count
+
+def true_count(self, decks_remaining: float) -> float:
+    return self.running_count / max(0.5, decks_remaining)
+        </pre>
+        <div class="code-ui">
+          <button class="btn small next">Next line</button>
+          <div class="explain"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Counting is arithmetic with a memory. Two through six are plus one. Seven through nine are zero. Ten through ace are minus one. The running count is the sum. The true count divides by the decks left.</p>
+    <p>Click Deal a card and watch both numbers move. The suggested bet scales with the true count. Hide the count and quiz the room, then reveal it. This is the same counter the simulation uses.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Tier 3 · Monte Carlo" data-title="One hundred thousand hands make the noise visible">
+  <div class="slide-inner">
+    <div class="kicker">15 · Tier 3 · Monte Carlo</div>
+    <h2>One hundred thousand hands make the noise visible.</h2>
+    <div class="panel chart-panel">
+      <div class="range-row">
+        <label class="check"><input type="checkbox" id="mcFlat" checked> Flat</label>
+        <label class="check"><input type="checkbox" id="mcCount" checked> Hi-Lo</label>
+        <label class="check"><input type="checkbox" id="mcEv" checked> EV</label>
+        <input type="range" id="mcRange" min="1" value="100000">
+        <span class="small" id="mcRangeLabel"></span>
+        <button class="btn small primary" id="mcPlay">Replay</button>
+      </div>
+      <div id="mcChart"></div>
+      <div class="formula">house edge = -sum(net) / sum(wagered)</div>
+    </div>
+    <div class="mc-stats">
+      <div class="stat"><div class="label">Flat edge</div><div class="big amber">+0.12%</div><div class="sub">house edge</div></div>
+      <div class="stat"><div class="label">Hi-Lo edge</div><div class="big green">-0.51%</div><div class="sub">player edge</div></div>
+      <div class="stat"><div class="label">Pooled edge</div><div class="big green">-0.48%</div><div class="sub">308,375 hands</div></div>
+      <div class="stat"><div class="label">Per line</div><div class="big">102,755</div><div class="sub">settled hands</div></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>One hundred thousand hands make the noise visible. The blue line is flat basic strategy. The green line is the Hi-Lo spread on the same shoes. The dashed line is the theoretical EV at a half percent.</p>
+    <p>The flat run lands at about point one two percent, the counting run at minus point five one, which is a player edge. The range slider zooms the window. Replay draws the curves from left to right. This is the experiment the whole project was built for.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Visualisations" data-title="Three ways to see risk">
+  <div class="slide-inner">
+    <div class="kicker">16 · Visualisations</div>
+    <h2>Three ways to see risk.</h2>
+    <div class="tabs" id="riskTabs">
+      <button class="tab on" data-tab="outcomes">Outcomes</button>
+      <button class="tab" data-tab="drawdown">Drawdown</button>
+      <button class="tab" data-tab="heatmap">Risk heatmap</button>
+    </div>
+    <div class="panel" id="riskPanel"></div>
+    <div class="small" id="riskCaption"></div>
+  </div>
+  <aside class="notes">
+    <p>Three ways to see risk. Outcomes shows the shape of a session: most hands lose, blackjacks and doubles pay for it. Drawdown shows the worst underwater point, which is what a player actually feels. The heatmap shows player EV by starting total and dealer upcard.</p>
+    <p>Red is a house edge, green is a player edge. Hover any cell to see the sample size. The point is that a positive edge is not a smooth line.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Tier 3 · Bots" data-title="Four betting systems walk into a casino">
+  <div class="slide-inner">
+    <div class="kicker">17 · Tier 3 · Bots</div>
+    <h2>Four betting systems walk into a casino.</h2>
+    <div class="grid-2">
+      <div class="bot-grid">
+        <div class="bot-card"><div class="name">Flat bettor</div><div class="rule">Always one unit. The control group.</div><div class="tag green">Low variance</div></div>
+        <div class="bot-card"><div class="name">Martingale</div><div class="rule">Double after a loss, reset after a win.</div><div class="tag red">Ruin risk</div></div>
+        <div class="bot-card"><div class="name">Hi-Lo spread</div><div class="rule">Bet one unit below a true count of one, scale to eight.</div><div class="tag green">Count edge</div></div>
+        <div class="bot-card"><div class="name">Half Kelly</div><div class="rule">Bet a fraction of the bankroll from edge and variance.</div><div class="tag amber">Aggressive</div></div>
+      </div>
+      <div class="panel">
+        <div class="tabs" id="lbTabs">
+          <button class="tab on" data-metric="final">Final bankroll</button>
+          <button class="tab" data-metric="edge">Edge</button>
+        </div>
+        <div id="leaderboardChart" style="margin-top:6px;"></div>
+        <div class="small">One 1,000-round session. Short samples are noisy. Across 300,000-hand runs, flat paid the house 0.35%; the count spread returned 0.48% to the player.</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Four betting systems. Flat always bets one unit. Martingale doubles after a loss and resets after a win. Hi-Lo spread sizes the bet from the true count. Half Kelly sizes from an estimated edge and variance.</p>
+    <p>The chart is one thousand rounds. The martingale can win a short session, which is exactly why short sessions are dangerous. Across 300,000-hand runs, the flat game paid the house about point three five percent; the Hi-Lo spread returned about point four eight percent to the player.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Tier 3 · Quality gate" data-title="Advanced goals, checked at the gate">
+  <div class="slide-inner">
+    <div class="kicker">18 · Checkpoint 3 and quality</div>
+    <h2>Advanced goals, checked at the gate.</h2>
+    <div class="grid-2">
+      <div class="panel tier">
+        <div class="tier-head"><span class="weight">20%</span><h3>Tier 3 · Advanced</h3></div>
+        <ul>
+          <li>Multi-deck shoe, cut card and discard tray.</li>
+          <li>Hi-Lo running count and true count.</li>
+          <li>Flat, martingale, spread and Kelly bots.</li>
+          <li>Monte Carlo convergence and count accounting.</li>
+        </ul>
+        <div class="evidence">0.3467% house edge over 308,277 hands · -0.5082% counting edge · 513 tests</div>
+      </div>
+      <div class="panel">
+        <div class="terminal">
+          <div><span class="prompt">$</span> pytest -q</div>
+          <div class="ok">513 passed</div>
+          <div><span class="prompt">$</span> black --check blackjack tests</div>
+          <div class="ok">25 files would be left unchanged</div>
+          <div><span class="prompt">$</span> flake8 blackjack tests</div>
+          <div class="ok">no findings</div>
+          <div><span class="prompt">$</span> jupyter nbconvert --execute ...</div>
+          <div class="ok">notebook executed, zero errors</div>
+        </div>
+        <p class="small" style="margin-top:8px;">Full type hints on the public API. Docstrings across the package. The notebook runs the quick suite at the end.</p>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="label">Tests</div><div class="big" data-count="513">0</div></div>
+      <div class="stat"><div class="label">Strategy cases</div><div class="big" data-count="376">0</div></div>
+      <div class="stat"><div class="label">Flake8 findings</div><div class="big" data-count="0">0</div></div>
+      <div class="stat"><div class="label">Black files</div><div class="big" data-count="25">0</div></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Checkpoint three was the advanced layer: the shoe, the counter, the bots, the leaderboard and the Monte Carlo checks. The numbers are on the left. On the right is the quality gate.</p>
+    <p>Five hundred ten tests pass. Black leaves twenty-five files unchanged. Flake8 has no findings. The notebook executes end to end. This is the part that turns a demo into something another data scientist could recreate.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Teamwork" data-title="Four workstreams, one integration path">
+  <div class="slide-inner">
+    <div class="kicker">19 · Teamwork</div>
+    <h2>Four workstreams, one integration path.</h2>
+    <div class="role-grid">
+      <div class="role">
+        <div class="rnum">Stream 01</div>
+        <h3>Rules engine</h3>
+        <p>Cards, hands, dealer, settlement and the 513-test suite.</p>
+        <div class="handoff">Hands off: a stable engine and a deterministic test harness.</div>
+      </div>
+      <div class="role">
+        <div class="rnum">Stream 02</div>
+        <h3>Strategy and analytics</h3>
+        <p>Basic strategy tables, fallbacks, house edge, streaks and drawdown.</p>
+        <div class="handoff">Hands off: a decision layer the simulation can call.</div>
+      </div>
+      <div class="role">
+        <div class="rnum">Stream 03</div>
+        <h3>Simulation and bots</h3>
+        <p>Monte Carlo runs, betting systems, shared-shoe competition and the leaderboard.</p>
+        <div class="handoff">Hands off: per-hand arrays for the charts.</div>
+      </div>
+      <div class="role">
+        <div class="rnum">Stream 04</div>
+        <h3>UI and communication</h3>
+        <p>Rich table, notebook, Plotly charts and this interactive deck.</p>
+        <div class="handoff">Hands off: a demo anyone can run.</div>
+      </div>
+    </div>
+    <div class="panel tight">
+      <p class="small">Every member can run the full app, the notebook and the test suite. The handoffs are real, not just labels.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>We split the work into four streams. Rules engine and tests. Strategy and analytics. Simulation and bots. UI, notebook and deck. The handoffs matter more than the labels.</p>
+    <p>The engine had to be stable before the strategy layer could be trusted. The analytics had to be defined before the charts could be drawn. Every member can run the full app, the notebook and the test suite, so the handoffs are real. If your group wants names on screen, add them to the four cards before presenting.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Limits and next" data-title="What we would build next">
+  <div class="slide-inner">
+    <div class="kicker">20 · Limits and next</div>
+    <h2>What we would build next.</h2>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>What we did not build</h3>
+        <ul class="checklist" style="margin-top:8px;">
+          <li>No full index plays beyond insurance.</li>
+          <li>No side bets or progressive jackpots.</li>
+          <li>No true simultaneous multi-seat table.</li>
+          <li>No browser game, the UI is terminal and notebook.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>What we would add</h3>
+        <ul class="checklist" style="margin-top:8px;">
+          <li>Count deviations for close hands.</li>
+          <li>A multi-seat table with one shared dealer hand.</li>
+          <li>A web UI and a live dealer mode.</li>
+          <li>More betting systems and risk-of-ruin metrics.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel tight">
+      <p class="small">What surprised us: variance is large enough that a 1,000-round leaderboard can crown the martingale. The long run is the only honest judge.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>What we did not build. No full index plays beyond insurance. No side bets. The competition is a shared shoe with bots taking turns, not a true simultaneous multi-seat table. What we would build next: count deviations, a multi-seat table, a web UI.</p>
+    <p>The surprise is variance. A one-thousand-round leaderboard can crown the martingale. The long run is the only honest judge.</p>
+  </aside>
+</section>
+
+<section class="slide" data-section="Q&amp;A" data-title="Questions">
+  <div class="slide-inner">
+    <div class="kicker">21 · Q&amp;A</div>
+    <h2>Questions?</h2>
+    <div class="qa-grid">
+      <div class="panel">
+        <h3>Try it</h3>
+        <pre class="code" data-lang="python" style="margin-top:8px;">
+python -m blackjack --trainer --hint
+python -m blackjack --demo --rounds 1000
+python -m pytest -q
+        </pre>
+      </div>
+      <div class="panel">
+        <h3>Repo</h3>
+        <p class="mono" style="margin-top:8px; color:var(--ink);">github.com/dakshbsdsba/blackjack_lt1</p>
+        <p class="small">main · latest commit</p>
+        <p class="small" style="margin-top:10px;">The engine owns the rules. The hand owns its cards and bet. The strategy table turns a hand and an upcard into an action. The counter turns cards into a true count. The simulator turns hands into arrays. The charts turn arrays into pictures.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Questions? The repo is linked here. The commands on the left are the live demo. If you want the short version: the engine owns the rules, the hand owns its cards and bet, the strategy table turns a hand and an upcard into an action, the counter turns cards into a true count, the simulator turns hands into arrays, and the charts turn arrays into pictures. Every layer is testable on its own.</p>
+    <p>Likely questions. Why 0.35 and not 0.5? Sample noise, the rule set includes late surrender, and the standard error on 300,000 hands is about 0.2 percent. How do splits not bleed? Each split hand is its own object with its own bet and flags. How is the chart verified? Against an independent rule-based reference, 376 cases. Hardest bug? A settlement guard returned early when the state was still SETTLED from the previous round, so later naturals were skipped. The fix sets the state to PLAYER at the start of every round, with a regression test.</p>
+  </aside>
+</section>
+
+</main>
+<div id="bottombar">
+  <button id="prev" title="Previous slide">←</button>
+  <span id="counter">1 / 22</span>
+  <button id="next" title="Next slide">→</button>
+  <button id="overviewBtn" title="Slide overview (O)">Overview</button>
+  <button id="notesBtn" title="Speaker notes (N)">Notes</button>
+  <button id="themeBtn" title="Toggle light and dark (L)">Light</button>
+  <button id="fullBtn" title="Fullscreen (F)">Full</button>
+  <button id="helpBtn" title="Controls (?)">?</button>
+</div>
+<div id="notesPanel">
+  <h4>Speaker notes</h4>
+  <div id="notesContent"></div>
+</div>
+<div id="overview">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <h3>Overview</h3>
+    <button class="btn" id="overviewClose">Close</button>
+  </div>
+  <div id="overviewGrid"></div>
+</div>
+<div id="help">
+  <div class="panel">
+    <h3>Controls</h3>
+    <p style="margin:10px 0; line-height:1.9;">
+      <span class="kbd">←</span> <span class="kbd">→</span> or <span class="kbd">Space</span> move between slides<br>
+      <span class="kbd">O</span> overview of every slide<br>
+      <span class="kbd">N</span> speaker notes for the current slide<br>
+      <span class="kbd">T</span> start or pause the timer<br>
+      <span class="kbd">F</span> fullscreen<br>
+      <span class="kbd">L</span> light or dark theme<br>
+      <span class="kbd">?</span> this panel
+    </p>
+    <button class="btn primary" id="helpClose">Close</button>
+  </div>
+</div>
+<div id="toast"></div>
+<script>window.DECK_DATA = {"strategy":{"hard":{"5":"HHHHHHHHHH","6":"HHHHHHHHHH","7":"HHHHHHHHHH","8":"HHHHHHHHHH","9":"HDDDDHHHHH","10":"DDDDDDDDHH","11":"DDDDDDDDDD","12":"HHSSSHHHHH","13":"SSSSSHHHHH","14":"SSSSSHHHHH","15":"SSSSSHHHHH","16":"SSSSSHHHHH","17":"SSSSSSSSSS","18":"SSSSSSSSSS","19":"SSSSSSSSSS","20":"SSSSSSSSSS","21":"SSSSSSSSSS"},"soft":{"12":"HHHHHHHHHH","13":"HHHDDHHHHH","14":"HHHDDHHHHH","15":"HHDDDHHHHH","16":"HHDDDHHHHH","17":"HDDDDHHHHH","18":"SddddSSHHH","19":"SSSSSSSSSS","20":"SSSSSSSSSS","21":"SSSSSSSSSS"},"pair":{"A":"PPPPPPPPPP","10":"SSSSSSSSSS","9":"PPPPPSPPSS","8":"PPPPPPPPPP","7":"PPPPPPHHHH","6":"PPPPPHHHHH","5":"DDDDDDDDHH","4":"HHHPPHHHHH","3":"PPPPPPHHHH","2":"PPPPPPHHHH"},"dealers":["2","3","4","5","6","7","8","9","10","A"]},"flat":{"label":"Flat basic strategy","color":"#22d3ee","indices":[0,245,490,735,980,1226,1471,1716,1961,2207,2452,2697,2942,3188,3433,3678,3923,4169,4414,4659,4904,5150,5395,5640,5885,6130,6376,6621,6866,7111,7357,7602,7847,8092,8338,8583,8828,9073,9319,9564,9809,10054,10300,10545,10790,11035,11280,11526,11771,12016,12261,12507,12752,12997,13242,13488,13733,13978,14223,14469,14714,14959,15204,15450,15695,15940,16185,16430,16676,16921,17166,17411,17657,17902,18147,18392,18638,18883,19128,19373,19619,19864,20109,20354,20600,20845,21090,21335,21581,21826,22071,22316,22561,22807,23052,23297,23542,23788,24033,24278,24523,24769,25014,25259,25504,25750,25995,26240,26485,26731,26976,27221,27466,27711,27957,28202,28447,28692,28938,29183,29428,29673,29919,30164,30409,30654,30900,31145,31390,31635,31881,32126,32371,32616,32861,33107,33352,33597,33842,34088,34333,34578,34823,35069,35314,35559,35804,36050,36295,36540,36785,37031,37276,37521,37766,38011,38257,38502,38747,38992,39238,39483,39728,39973,40219,40464,40709,40954,41200,41445,41690,41935,42181,42426,42671,42916,43162,43407,43652,43897,44142,44388,44633,44878,45123,45369,45614,45859,46104,46350,46595,46840,47085,47331,47576,47821,48066,48312,48557,48802,49047,49292,49538,49783,50028,50273,50519,50764,51009,51254,51500,51745,51990,52235,52481,52726,52971,53216,53462,53707,53952,54197,54442,54688,54933,55178,55423,55669,55914,56159,56404,56650,56895,57140,57385,57631,57876,58121,58366,58612,58857,59102,59347,59592,59838,60083,60328,60573,60819,61064,61309,61554,61800,62045,62290,62535,62781,63026,63271,63516,63762,64007,64252,64497,64743,64988,65233,65478,65723,65969,66214,66459,66704,66950,67195,67440,67685,67931,68176,68421,68666,68912,69157,69402,69647,69893,70138,70383,70628,70873,71119,71364,71609,71854,72100,72345,72590,72835,73081,73326,73571,73816,74062,74307,74552,74797,75043,75288,75533,75778,76023,76269,76514,76759,77004,77250,77495,77740,77985,78231,78476,78721,78966,79212,79457,79702,79947,80193,80438,80683,80928,81173,81419,81664,81909,82154,82400,82645,82890,83135,83381,83626,83871,84116,84362,84607,84852,85097,85343,85588,85833,86078,86324,86569,86814,87059,87304,87550,87795,88040,88285,88531,88776,89021,89266,89512,89757,90002,90247,90493,90738,90983,91228,91474,91719,91964,92209,92454,92700,92945,93190,93435,93681,93926,94171,94416,94662,94907,95152,95397,95643,95888,96133,96378,96624,96869,97114,97359,97604,97850,98095,98340,98585,98831,99076,99321,99566,99812,100057,100302,100547,100793,101038,101283,101528,101774,102019,102264,102509,102755],"bankroll":[100000.0,99640.0,99640.0,99550.0,99690.0,99390.0,99450.0,99685.0,99965.0,99885.0,99915.0,99955.0,100270.0,99870.0,99960.0,99855.0,99635.0,99680.0,99435.0,99590.0,99790.0,99785.0,99820.0,99370.0,99490.0,99605.0,99225.0,99340.0,99395.0,99590.0,99510.0,99470.0,99750.0,99465.0,99565.0,99225.0,99135.0,99105.0,99235.0,99340.0,99225.0,99265.0,99360.0,99255.0,99285.0,99215.0,99165.0,98740.0,98965.0,98970.0,98990.0,98780.0,98840.0,99145.0,99255.0,99320.0,99645.0,99525.0,99620.0,99725.0,99745.0,99850.0,99935.0,99855.0,99930.0,100145.0,100310.0,100425.0,100180.0,100060.0,100155.0,100400.0,100610.0,100700.0,100850.0,101365.0,101070.0,100890.0,100770.0,100810.0,100845.0,100485.0,100460.0,100710.0,100815.0,100890.0,100955.0,100945.0,100995.0,101060.0,101160.0,101220.0,101180.0,101115.0,101135.0,101060.0,101290.0,101310.0,101235.0,101100.0,101165.0,100905.0,100845.0,100690.0,100740.0,100455.0,100160.0,100210.0,100280.0,100230.0,100160.0,100100.0,100040.0,99930.0,99955.0,99910.0,100080.0,100210.0,99975.0,99785.0,99830.0,99810.0,100130.0,100015.0,100055.0,100100.0,100040.0,100390.0,100220.0,100075.0,99670.0,99825.0,99750.0,99520.0,99460.0,99455.0,99530.0,99675.0,99565.0,99615.0,99420.0,99425.0,99470.0,99920.0,100055.0,99930.0,99780.0,99590.0,99650.0,99640.0,99830.0,99735.0,99800.0,99575.0,99410.0,99320.0,99480.0,99580.0,99700.0,99555.0,99540.0,99505.0,99560.0,99425.0,99480.0,99550.0,99580.0,99440.0,99495.0,99865.0,99850.0,100055.0,99935.0,99625.0,99645.0,99645.0,99775.0,99805.0,99540.0,99495.0,99540.0,99305.0,99365.0,99245.0,99405.0,99390.0,99405.0,99515.0,99495.0,99385.0,99640.0,99810.0,99950.0,100045.0,100105.0,100045.0,100225.0,100390.0,100230.0,100510.0,100370.0,100305.0,100205.0,100305.0,100390.0,100490.0,100575.0,100680.0,100580.0,100570.0,100660.0,100605.0,100715.0,100830.0,100680.0,100795.0,100935.0,100790.0,100765.0,100910.0,101075.0,100890.0,100805.0,100710.0,100800.0,100585.0,100450.0,100410.0,100515.0,100410.0,100225.0,100380.0,100235.0,100255.0,100290.0,100200.0,100095.0,100005.0,100210.0,100075.0,100200.0,100445.0,100295.0,99885.0,100035.0,100125.0,99805.0,99995.0,99860.0,99610.0,99530.0,99350.0,99210.0,99160.0,99130.0,99090.0,99040.0,98875.0,98995.0,98740.0,98670.0,98790.0,98900.0,99035.0,98990.0,99100.0,99145.0,99355.0,99235.0,99345.0,99425.0,99365.0,99515.0,99550.0,99575.0,99555.0,99625.0,99135.0,99145.0,99310.0,99395.0,99300.0,99320.0,99350.0,99190.0,99010.0,98660.0,98850.0,98695.0,98595.0,98510.0,98645.0,98680.0,98570.0,98635.0,98700.0,98620.0,98465.0,98265.0,98195.0,98420.0,98500.0,98440.0,98510.0,98520.0,98435.0,98495.0,98410.0,98455.0,98510.0,98495.0,98445.0,98230.0,98475.0,98220.0,98600.0,98970.0,98740.0,98825.0,98625.0,98670.0,98945.0,99230.0,99095.0,98725.0,98615.0,98555.0,98785.0,98580.0,98660.0,99015.0,99045.0,99075.0,99025.0,98775.0,99065.0,99295.0,99515.0,99680.0,99550.0,99505.0,99335.0,99020.0,98760.0,98880.0,99030.0,99125.0,99025.0,99175.0,99160.0,98935.0,99185.0,99075.0,98940.0,98820.0,98925.0,99145.0,99540.0,99430.0,99220.0,99310.0,99225.0,98950.0,98940.0,99165.0,99130.0,99045.0,98980.0,99555.0,99480.0,99430.0,99175.0,99200.0,99070.0,98915.0,99300.0,99630.0,99655.0,99640.0,99690.0,99400.0,99315.0,99320.0,99270.0,99085.0,99190.0,98920.0,98645.0,98560.0,98575.0,98505.0,98630.0,98730.0,98295.0,98390.0,98580.0,98380.0,98145.0,98325.0,98355.0,98245.0,98175.0,98085.0,97910.0,98005.0,98325.0,98385.0,98560.0,98510.0,98705.0,98680.0,98750.0,98765.0,98610.0,98780.0,99045.0,98600.0,98695.0,98910.0,98625.0],"drawdown_indices":[0,245,490,735,980,1226,1471,1716,1961,2207,2452,2697,2942,3188,3433,3678,3923,4169,4414,4659,4904,5150,5395,5640,5885,6130,6376,6621,6866,7111,7357,7602,7847,8092,8338,8583,8828,9073,9319,9564,9809,10054,10300,10545,10790,11035,11280,11526,11771,12016,12261,12507,12752,12997,13242,13488,13733,13978,14223,14469,14714,14959,15204,15450,15695,15940,16185,16430,16676,16921,17166,17411,17657,17902,18147,18392,18638,18883,19128,19373,19619,19864,20109,20354,20600,20845,21090,21335,21581,21826,22071,22316,22561,22807,23052,23297,23542,23788,24033,24278,24523,24769,25014,25259,25504,25750,25995,26240,26485,26731,26976,27221,27466,27711,27957,28202,28447,28692,28938,29183,29428,29673,29919,30164,30409,30654,30900,31145,31390,31635,31881,32126,32371,32616,32861,33107,33352,33597,33842,34088,34333,34578,34823,35069,35314,35559,35804,36050,36295,36540,36785,37031,37276,37521,37766,38011,38257,38502,38747,38992,39238,39483,39728,39973,40219,40464,40709,40954,41200,41445,41690,41935,42181,42426,42671,42916,43162,43407,43652,43897,44142,44388,44633,44878,45123,45369,45614,45859,46104,46350,46595,46840,47085,47331,47576,47821,48066,48312,48557,48802,49047,49292,49538,49783,50028,50273,50519,50764,51009,51254,51500,51745,51990,52235,52481,52726,52971,53216,53462,53707,53952,54197,54442,54688,54933,55178,55423,55669,55914,56159,56404,56650,56895,57140,57385,57631,57876,58121,58366,58612,58857,59102,59347,59592,59838,60083,60328,60573,60819,61064,61309,61554,61800,62045,62290,62535,62781,63026,63271,63516,63762,64007,64252,64497,64743,64988,65233,65478,65723,65969,66214,66459,66704,66950,67195,67440,67685,67931,68176,68421,68666,68912,69157,69402,69647,69893,70138,70383,70628,70873,71119,71364,71609,71854,72100,72345,72590,72835,73081,73326,73571,73816,74062,74307,74552,74797,75043,75288,75533,75778,76023,76269,76514,76759,77004,77250,77495,77740,77985,78231,78476,78721,78966,79212,79457,79702,79947,80193,80438,80683,80928,81173,81419,81664,81909,82154,82400,82645,82890,83135,83381,83626,83871,84116,84362,84607,84852,85097,85343,85588,85833,86078,86324,86569,86814,87059,87304,87550,87795,88040,88285,88531,88776,89021,89266,89512,89757,90002,90247,90493,90738,90983,91228,91474,91719,91964,92209,92454,92700,92945,93190,93435,93681,93926,94171,94416,94662,94907,95152,95397,95643,95888,96133,96378,96624,96869,97114,97359,97604,97850,98095,98340,98585,98831,99076,99321,99566,99812,100057,100302,100547,100793,101038,101283,101528,101774,102019,102264,102509,102755],"drawdown":[0.0,360.0,360.0,450.0,310.0,610.0,550.0,315.0,45.0,150.0,120.0,80.0,60.0,460.0,370.0,475.0,695.0,650.0,895.0,740.0,540.0,545.0,510.0,960.0,840.0,725.0,1105.0,990.0,935.0,740.0,820.0,860.0,580.0,865.0,765.0,1105.0,1195.0,1225.0,1095.0,990.0,1105.0,1065.0,970.0,1075.0,1045.0,1115.0,1165.0,1590.0,1365.0,1360.0,1340.0,1550.0,1490.0,1185.0,1075.0,1010.0,685.0,805.0,710.0,605.0,585.0,480.0,395.0,475.0,400.0,185.0,30.0,85.0,355.0,475.0,380.0,135.0,30.0,65.0,0.0,55.0,365.0,545.0,665.0,625.0,590.0,950.0,975.0,725.0,620.0,545.0,480.0,490.0,440.0,375.0,275.0,215.0,255.0,320.0,300.0,375.0,145.0,125.0,200.0,335.0,270.0,530.0,590.0,745.0,695.0,980.0,1275.0,1225.0,1155.0,1205.0,1275.0,1335.0,1395.0,1505.0,1480.0,1525.0,1355.0,1225.0,1460.0,1650.0,1605.0,1625.0,1305.0,1420.0,1380.0,1335.0,1395.0,1045.0,1215.0,1360.0,1765.0,1610.0,1685.0,1915.0,1975.0,1980.0,1905.0,1760.0,1870.0,1820.0,2015.0,2010.0,1965.0,1515.0,1380.0,1505.0,1655.0,1845.0,1785.0,1795.0,1605.0,1700.0,1635.0,1860.0,2025.0,2115.0,1955.0,1855.0,1735.0,1880.0,1895.0,1930.0,1875.0,2010.0,1955.0,1885.0,1855.0,1995.0,1940.0,1570.0,1585.0,1380.0,1500.0,1810.0,1790.0,1790.0,1660.0,1630.0,1895.0,1940.0,1895.0,2130.0,2070.0,2190.0,2030.0,2045.0,2030.0,1920.0,1940.0,2050.0,1795.0,1625.0,1485.0,1390.0,1330.0,1390.0,1210.0,1045.0,1205.0,925.0,1065.0,1130.0,1230.0,1130.0,1045.0,945.0,860.0,755.0,855.0,865.0,775.0,830.0,720.0,605.0,755.0,640.0,500.0,645.0,670.0,525.0,360.0,545.0,630.0,725.0,635.0,850.0,985.0,1025.0,920.0,1025.0,1210.0,1055.0,1200.0,1180.0,1145.0,1235.0,1340.0,1430.0,1225.0,1360.0,1235.0,990.0,1140.0,1550.0,1400.0,1310.0,1630.0,1440.0,1575.0,1825.0,1905.0,2085.0,2225.0,2275.0,2305.0,2345.0,2395.0,2560.0,2440.0,2695.0,2765.0,2645.0,2535.0,2400.0,2445.0,2335.0,2290.0,2080.0,2200.0,2090.0,2010.0,2070.0,1920.0,1885.0,1860.0,1880.0,1810.0,2300.0,2290.0,2125.0,2040.0,2135.0,2115.0,2085.0,2245.0,2425.0,2775.0,2585.0,2740.0,2840.0,2925.0,2790.0,2755.0,2865.0,2800.0,2735.0,2815.0,2970.0,3170.0,3240.0,3015.0,2935.0,2995.0,2925.0,2915.0,3000.0,2940.0,3025.0,2980.0,2925.0,2940.0,2990.0,3205.0,2960.0,3215.0,2835.0,2465.0,2695.0,2610.0,2810.0,2765.0,2490.0,2205.0,2340.0,2710.0,2820.0,2880.0,2650.0,2855.0,2775.0,2420.0,2390.0,2360.0,2410.0,2660.0,2370.0,2140.0,1920.0,1755.0,1885.0,1930.0,2100.0,2415.0,2675.0,2555.0,2405.0,2310.0,2410.0,2260.0,2275.0,2500.0,2250.0,2360.0,2495.0,2615.0,2510.0,2290.0,1895.0,2005.0,2215.0,2125.0,2210.0,2485.0,2495.0,2270.0,2305.0,2390.0,2455.0,1880.0,1955.0,2005.0,2260.0,2235.0,2365.0,2520.0,2135.0,1805.0,1780.0,1795.0,1745.0,2035.0,2120.0,2115.0,2165.0,2350.0,2245.0,2515.0,2790.0,2875.0,2860.0,2930.0,2805.0,2705.0,3140.0,3045.0,2855.0,3055.0,3290.0,3110.0,3080.0,3190.0,3260.0,3350.0,3525.0,3430.0,3110.0,3050.0,2875.0,2925.0,2730.0,2755.0,2685.0,2670.0,2825.0,2655.0,2390.0,2835.0,2740.0,2525.0,2810.0],"ev":[100000.0,99986.48,99972.97,99959.45,99945.93,99932.36,99918.84,99905.32,99891.81,99878.23,99864.72,99851.2,99837.68,99824.11,99810.59,99797.08,99783.56,99769.99,99756.47,99742.95,99729.43,99715.86,99702.34,99688.83,99675.31,99661.79,99648.22,99634.7,99621.19,99607.67,99594.1,99580.58,99567.06,99553.54,99539.97,99526.45,99512.94,99499.42,99485.85,99472.33,99458.81,99445.3,99431.72,99418.21,99404.69,99391.17,99377.65,99364.08,99350.56,99337.05,99323.53,99309.96,99296.44,99282.92,99269.41,99255.83,99242.32,99228.8,99215.28,99201.71,99188.19,99174.67,99161.16,99147.58,99134.07,99120.55,99107.03,99093.52,99079.94,99066.43,99052.91,99039.39,99025.82,99012.3,98998.78,98985.27,98971.69,98958.18,98944.66,98931.14,98917.57,98904.05,98890.54,98877.02,98863.45,98849.93,98836.41,98822.89,98809.32,98795.81,98782.29,98768.77,98755.25,98741.68,98728.16,98714.65,98701.13,98687.56,98674.04,98660.52,98647.0,98633.43,98619.92,98606.4,98592.88,98579.31,98565.79,98552.27,98538.76,98525.18,98511.67,98498.15,98484.63,98471.11,98457.54,98444.03,98430.51,98416.99,98403.42,98389.9,98376.38,98362.87,98349.29,98335.78,98322.26,98308.74,98295.17,98281.65,98268.14,98254.62,98241.05,98227.53,98214.01,98200.49,98186.98,98173.4,98159.89,98146.37,98132.85,98119.28,98105.76,98092.25,98078.73,98065.16,98051.64,98038.12,98024.6,98011.03,97997.51,97984.0,97970.48,97956.91,97943.39,97929.87,97916.36,97902.84,97889.27,97875.75,97862.23,97848.71,97835.14,97821.62,97808.11,97794.59,97781.02,97767.5,97753.98,97740.47,97726.89,97713.38,97699.86,97686.34,97672.77,97659.25,97645.73,97632.22,97618.64,97605.13,97591.61,97578.09,97564.58,97551.0,97537.49,97523.97,97510.45,97496.88,97483.36,97469.84,97456.33,97442.75,97429.24,97415.72,97402.2,97388.63,97375.11,97361.6,97348.08,97334.51,97320.99,97307.47,97293.95,97280.44,97266.86,97253.35,97239.83,97226.31,97212.74,97199.22,97185.71,97172.19,97158.62,97145.1,97131.58,97118.06,97104.49,97090.97,97077.46,97063.94,97050.37,97036.85,97023.33,97009.82,96996.3,96982.73,96969.21,96955.69,96942.17,96928.6,96915.08,96901.57,96888.05,96874.48,96860.96,96847.44,96833.93,96820.35,96806.84,96793.32,96779.8,96766.23,96752.71,96739.2,96725.68,96712.16,96698.59,96685.07,96671.55,96658.04,96644.46,96630.95,96617.43,96603.91,96590.34,96576.82,96563.31,96549.79,96536.22,96522.7,96509.18,96495.66,96482.09,96468.57,96455.06,96441.54,96427.97,96414.45,96400.93,96387.42,96373.9,96360.33,96346.81,96333.29,96319.77,96306.2,96292.68,96279.17,96265.65,96252.08,96238.56,96225.04,96211.53,96197.95,96184.44,96170.92,96157.4,96143.83,96130.31,96116.79,96103.28,96089.76,96076.19,96062.67,96049.15,96035.64,96022.06,96008.55,95995.03,95981.51,95967.94,95954.42,95940.9,95927.39,95913.81,95900.3,95886.78,95873.26,95859.69,95846.17,95832.66,95819.14,95805.62,95792.05,95778.53,95765.01,95751.5,95737.92,95724.41,95710.89,95697.37,95683.8,95670.28,95656.77,95643.25,95629.68,95616.16,95602.64,95589.12,95575.55,95562.03,95548.52,95535.0,95521.48,95507.91,95494.39,95480.88,95467.36,95453.79,95440.27,95426.75,95413.23,95399.66,95386.14,95372.63,95359.11,95345.54,95332.02,95318.5,95304.99,95291.41,95277.9,95264.38,95250.86,95237.29,95223.77,95210.25,95196.74,95183.22,95169.65,95156.13,95142.61,95129.1,95115.52,95102.01,95088.49,95074.97,95061.4,95047.88,95034.36,95020.85,95007.28,94993.76,94980.24,94966.72,94953.15,94939.63,94926.12,94912.6,94899.08,94885.51,94871.99,94858.47,94844.96,94831.39,94817.87,94804.35,94790.83,94777.26,94763.74,94750.23,94736.71,94723.14,94709.62,94696.1,94682.59,94669.01,94655.5,94641.98,94628.46,94614.94,94601.37,94587.85,94574.34,94560.82,94547.25,94533.73,94520.21,94506.7,94493.12,94479.61,94466.09,94452.57,94439.0,94425.48,94411.96,94398.45,94384.87,94371.36,94357.84,94344.32,94330.75],"start":100000,"hands":102755,"rounds":100000,"edge":0.1213,"net":-1375.0,"wagered":1133850.0,"avg_bet":11.03,"final":98625.0,"max_drawdown":3610.0,"wins":43877,"losses":45944,"pushes":8499,"blackjacks":4650,"surrender":4435,"adherence":100.0},"counting":{"label":"Hi-Lo spread","color":"#34d399","indices":[0,245,490,735,980,1226,1471,1716,1961,2207,2452,2697,2942,3188,3433,3678,3923,4169,4414,4659,4904,5150,5395,5640,5885,6130,6376,6621,6866,7111,7357,7602,7847,8092,8338,8583,8828,9073,9319,9564,9809,10054,10300,10545,10790,11035,11280,11526,11771,12016,12261,12507,12752,12997,13242,13488,13733,13978,14223,14469,14714,14959,15204,15450,15695,15940,16185,16430,16676,16921,17166,17411,17657,17902,18147,18392,18638,18883,19128,19373,19619,19864,20109,20354,20600,20845,21090,21335,21581,21826,22071,22316,22561,22807,23052,23297,23542,23788,24033,24278,24523,24769,25014,25259,25504,25750,25995,26240,26485,26731,26976,27221,27466,27711,27957,28202,28447,28692,28938,29183,29428,29673,29919,30164,30409,30654,30900,31145,31390,31635,31881,32126,32371,32616,32861,33107,33352,33597,33842,34088,34333,34578,34823,35069,35314,35559,35804,36050,36295,36540,36785,37031,37276,37521,37766,38011,38257,38502,38747,38992,39238,39483,39728,39973,40219,40464,40709,40954,41200,41445,41690,41935,42181,42426,42671,42916,43162,43407,43652,43897,44142,44388,44633,44878,45123,45369,45614,45859,46104,46350,46595,46840,47085,47331,47576,47821,48066,48312,48557,48802,49047,49292,49538,49783,50028,50273,50519,50764,51009,51254,51500,51745,51990,52235,52481,52726,52971,53216,53462,53707,53952,54197,54442,54688,54933,55178,55423,55669,55914,56159,56404,56650,56895,57140,57385,57631,57876,58121,58366,58612,58857,59102,59347,59592,59838,60083,60328,60573,60819,61064,61309,61554,61800,62045,62290,62535,62781,63026,63271,63516,63762,64007,64252,64497,64743,64988,65233,65478,65723,65969,66214,66459,66704,66950,67195,67440,67685,67931,68176,68421,68666,68912,69157,69402,69647,69893,70138,70383,70628,70873,71119,71364,71609,71854,72100,72345,72590,72835,73081,73326,73571,73816,74062,74307,74552,74797,75043,75288,75533,75778,76023,76269,76514,76759,77004,77250,77495,77740,77985,78231,78476,78721,78966,79212,79457,79702,79947,80193,80438,80683,80928,81173,81419,81664,81909,82154,82400,82645,82890,83135,83381,83626,83871,84116,84362,84607,84852,85097,85343,85588,85833,86078,86324,86569,86814,87059,87304,87550,87795,88040,88285,88531,88776,89021,89266,89512,89757,90002,90247,90493,90738,90983,91228,91474,91719,91964,92209,92454,92700,92945,93190,93435,93681,93926,94171,94416,94662,94907,95152,95397,95643,95888,96133,96378,96624,96869,97114,97359,97604,97850,98095,98340,98585,98831,99076,99321,99566,99812,100057,100302,100547,100793,101038,101283,101528,101774,102019,102264,102509,102755],"bankroll":[100000.0,99285.0,99140.0,99015.0,99490.0,99230.0,99180.0,99245.0,99440.0,99405.0,99485.0,99610.0,99950.0,99440.0,99885.0,99910.0,99675.0,99725.0,99290.0,99490.0,99725.0,99800.0,100330.0,99860.0,100070.0,100360.0,100095.0,100400.0,100645.0,101080.0,100900.0,101190.0,101530.0,101015.0,101025.0,100535.0,100365.0,100415.0,100815.0,100905.0,100705.0,101135.0,101360.0,100975.0,101070.0,101040.0,101620.0,101105.0,101695.0,101555.0,101740.0,101410.0,101630.0,101995.0,102105.0,102100.0,102745.0,102700.0,103090.0,103290.0,103080.0,103140.0,103100.0,102970.0,103140.0,103745.0,104180.0,104185.0,104745.0,104645.0,104915.0,104940.0,105125.0,105355.0,105675.0,106485.0,106145.0,105935.0,105865.0,105815.0,105235.0,104995.0,104945.0,105085.0,104960.0,105220.0,105330.0,105060.0,105285.0,105295.0,105355.0,105850.0,105715.0,105695.0,105260.0,105145.0,105800.0,105745.0,105575.0,105765.0,106135.0,105940.0,106420.0,106075.0,106315.0,106230.0,105835.0,106110.0,106150.0,106040.0,106105.0,106200.0,106070.0,105900.0,105935.0,105645.0,105735.0,106000.0,105715.0,105505.0,105420.0,105480.0,105935.0,105850.0,105565.0,105875.0,105640.0,106330.0,106185.0,105590.0,104985.0,105020.0,104840.0,104370.0,104530.0,104715.0,104720.0,105060.0,105230.0,105390.0,105040.0,104895.0,104935.0,105670.0,106195.0,106185.0,105855.0,105865.0,105955.0,106220.0,106630.0,106580.0,106680.0,106535.0,106340.0,106325.0,106275.0,106420.0,106480.0,106530.0,106000.0,106045.0,106355.0,106170.0,106225.0,106185.0,106450.0,106375.0,106745.0,107590.0,107455.0,107640.0,107490.0,107120.0,107310.0,106995.0,107375.0,107450.0,107130.0,106915.0,107020.0,106675.0,106845.0,106510.0,106925.0,106760.0,106295.0,106495.0,106645.0,106525.0,106800.0,107015.0,107180.0,107215.0,107370.0,107310.0,107525.0,107830.0,107225.0,107800.0,107535.0,107480.0,107200.0,107970.0,108280.0,108395.0,108520.0,108660.0,108520.0,108510.0,109105.0,108860.0,109285.0,109185.0,108665.0,109220.0,109275.0,109115.0,109115.0,109115.0,109345.0,109135.0,108940.0,109030.0,109145.0,108680.0,108480.0,108300.0,108065.0,108100.0,107675.0,108040.0,108035.0,108085.0,107965.0,107630.0,107655.0,107550.0,107730.0,107500.0,107640.0,107820.0,107640.0,107475.0,107640.0,107685.0,107130.0,107320.0,107290.0,106745.0,106635.0,106490.0,106230.0,106240.0,106225.0,106265.0,106110.0,105940.0,105980.0,105835.0,105460.0,105780.0,105770.0,106005.0,105830.0,105940.0,105925.0,106265.0,106210.0,106335.0,106655.0,106610.0,106570.0,106975.0,106730.0,106510.0,106665.0,105970.0,105975.0,106285.0,106120.0,105930.0,106240.0,106090.0,105700.0,105360.0,104990.0,105490.0,105185.0,105020.0,104540.0,104855.0,105030.0,104950.0,105145.0,105305.0,105315.0,105150.0,104830.0,104765.0,104840.0,105060.0,105265.0,105455.0,105560.0,105260.0,105320.0,105225.0,105255.0,105190.0,105070.0,104885.0,104665.0,105375.0,104980.0,105705.0,105925.0,105700.0,105750.0,105385.0,105430.0,105720.0,106085.0,105835.0,105485.0,105270.0,105265.0,105465.0,105195.0,105420.0,105675.0,105660.0,105705.0,105060.0,104780.0,105430.0,105860.0,106245.0,106460.0,106275.0,106240.0,105920.0,105015.0,104805.0,105015.0,105405.0,105640.0,105880.0,106320.0,106380.0,106125.0,106740.0,106610.0,106325.0,106230.0,106175.0,107445.0,107855.0,107720.0,107265.0,107335.0,107125.0,106860.0,106915.0,107100.0,107185.0,107200.0,107340.0,107985.0,108030.0,108285.0,108170.0,108295.0,107975.0,107735.0,108140.0,108580.0,108725.0,108570.0,108585.0,108305.0,108665.0,108620.0,108485.0,108025.0,108020.0,107705.0,107290.0,107285.0,107635.0,107530.0,107730.0,108050.0,107555.0,107755.0,108010.0,107320.0,107095.0,107290.0,107280.0,107520.0,107435.0,107385.0,107195.0,107340.0,107430.0,107700.0,108120.0,107930.0,108220.0,108510.0,108340.0,108625.0,108405.0,108460.0,108810.0,108195.0,108475.0,108865.0,108355.0],"drawdown_indices":[0,245,490,735,980,1226,1471,1716,1961,2207,2452,2697,2942,3188,3433,3678,3923,4169,4414,4659,4904,5150,5395,5640,5885,6130,6376,6621,6866,7111,7357,7602,7847,8092,8338,8583,8828,9073,9319,9564,9809,10054,10300,10545,10790,11035,11280,11526,11771,12016,12261,12507,12752,12997,13242,13488,13733,13978,14223,14469,14714,14959,15204,15450,15695,15940,16185,16430,16676,16921,17166,17411,17657,17902,18147,18392,18638,18883,19128,19373,19619,19864,20109,20354,20600,20845,21090,21335,21581,21826,22071,22316,22561,22807,23052,23297,23542,23788,24033,24278,24523,24769,25014,25259,25504,25750,25995,26240,26485,26731,26976,27221,27466,27711,27957,28202,28447,28692,28938,29183,29428,29673,29919,30164,30409,30654,30900,31145,31390,31635,31881,32126,32371,32616,32861,33107,33352,33597,33842,34088,34333,34578,34823,35069,35314,35559,35804,36050,36295,36540,36785,37031,37276,37521,37766,38011,38257,38502,38747,38992,39238,39483,39728,39973,40219,40464,40709,40954,41200,41445,41690,41935,42181,42426,42671,42916,43162,43407,43652,43897,44142,44388,44633,44878,45123,45369,45614,45859,46104,46350,46595,46840,47085,47331,47576,47821,48066,48312,48557,48802,49047,49292,49538,49783,50028,50273,50519,50764,51009,51254,51500,51745,51990,52235,52481,52726,52971,53216,53462,53707,53952,54197,54442,54688,54933,55178,55423,55669,55914,56159,56404,56650,56895,57140,57385,57631,57876,58121,58366,58612,58857,59102,59347,59592,59838,60083,60328,60573,60819,61064,61309,61554,61800,62045,62290,62535,62781,63026,63271,63516,63762,64007,64252,64497,64743,64988,65233,65478,65723,65969,66214,66459,66704,66950,67195,67440,67685,67931,68176,68421,68666,68912,69157,69402,69647,69893,70138,70383,70628,70873,71119,71364,71609,71854,72100,72345,72590,72835,73081,73326,73571,73816,74062,74307,74552,74797,75043,75288,75533,75778,76023,76269,76514,76759,77004,77250,77495,77740,77985,78231,78476,78721,78966,79212,79457,79702,79947,80193,80438,80683,80928,81173,81419,81664,81909,82154,82400,82645,82890,83135,83381,83626,83871,84116,84362,84607,84852,85097,85343,85588,85833,86078,86324,86569,86814,87059,87304,87550,87795,88040,88285,88531,88776,89021,89266,89512,89757,90002,90247,90493,90738,90983,91228,91474,91719,91964,92209,92454,92700,92945,93190,93435,93681,93926,94171,94416,94662,94907,95152,95397,95643,95888,96133,96378,96624,96869,97114,97359,97604,97850,98095,98340,98585,98831,99076,99321,99566,99812,100057,100302,100547,100793,101038,101283,101528,101774,102019,102264,102509,102755],"drawdown":[0.0,715.0,860.0,985.0,510.0,770.0,820.0,755.0,560.0,595.0,515.0,390.0,60.0,570.0,125.0,135.0,470.0,420.0,855.0,655.0,420.0,345.0,160.0,630.0,420.0,130.0,395.0,90.0,255.0,30.0,220.0,0.0,45.0,560.0,550.0,1040.0,1210.0,1160.0,760.0,670.0,870.0,440.0,215.0,600.0,505.0,535.0,100.0,615.0,25.0,330.0,145.0,645.0,425.0,75.0,80.0,190.0,10.0,285.0,105.0,15.0,260.0,265.0,305.0,435.0,265.0,60.0,30.0,195.0,340.0,440.0,170.0,170.0,30.0,30.0,20.0,115.0,455.0,665.0,735.0,785.0,1365.0,1605.0,1655.0,1515.0,1640.0,1380.0,1270.0,1540.0,1315.0,1305.0,1245.0,750.0,885.0,905.0,1340.0,1455.0,800.0,855.0,1025.0,835.0,465.0,660.0,235.0,580.0,340.0,425.0,820.0,545.0,505.0,615.0,550.0,455.0,585.0,755.0,720.0,1010.0,920.0,655.0,940.0,1150.0,1235.0,1175.0,720.0,805.0,1090.0,780.0,1015.0,325.0,470.0,1065.0,1670.0,1635.0,1815.0,2285.0,2125.0,1940.0,1935.0,1595.0,1425.0,1265.0,1615.0,1760.0,1720.0,985.0,460.0,480.0,810.0,800.0,710.0,445.0,35.0,175.0,85.0,235.0,430.0,445.0,495.0,350.0,290.0,240.0,770.0,725.0,415.0,600.0,545.0,585.0,320.0,395.0,65.0,15.0,150.0,85.0,235.0,605.0,415.0,730.0,350.0,275.0,595.0,810.0,705.0,1050.0,880.0,1215.0,800.0,965.0,1430.0,1230.0,1080.0,1200.0,925.0,710.0,545.0,510.0,355.0,415.0,200.0,0.0,680.0,105.0,405.0,480.0,760.0,95.0,285.0,170.0,45.0,0.0,190.0,300.0,0.0,410.0,90.0,325.0,845.0,340.0,285.0,445.0,445.0,445.0,215.0,425.0,620.0,530.0,415.0,880.0,1080.0,1260.0,1495.0,1460.0,1885.0,1520.0,1525.0,1475.0,1595.0,1930.0,1905.0,2010.0,1830.0,2060.0,1920.0,1740.0,1920.0,2085.0,1920.0,1875.0,2430.0,2240.0,2270.0,2815.0,2925.0,3070.0,3330.0,3320.0,3335.0,3295.0,3450.0,3620.0,3580.0,3725.0,4100.0,3780.0,3790.0,3555.0,3730.0,3620.0,3635.0,3295.0,3350.0,3225.0,2905.0,2950.0,2990.0,2585.0,2830.0,3050.0,2895.0,3590.0,3585.0,3275.0,3440.0,3630.0,3320.0,3470.0,3860.0,4200.0,4570.0,4070.0,4375.0,4540.0,5020.0,4705.0,4530.0,4610.0,4415.0,4255.0,4245.0,4410.0,4730.0,4795.0,4720.0,4500.0,4295.0,4105.0,4000.0,4300.0,4240.0,4335.0,4305.0,4370.0,4490.0,4675.0,4895.0,4185.0,4580.0,3855.0,3635.0,3860.0,3810.0,4175.0,4130.0,3840.0,3475.0,3725.0,4075.0,4290.0,4295.0,4095.0,4365.0,4140.0,3885.0,3900.0,3855.0,4500.0,4780.0,4130.0,3700.0,3315.0,3100.0,3285.0,3320.0,3640.0,4545.0,4755.0,4545.0,4155.0,3920.0,3680.0,3240.0,3180.0,3435.0,2820.0,2950.0,3235.0,3330.0,3385.0,2115.0,1705.0,1840.0,2295.0,2225.0,2435.0,2700.0,2645.0,2460.0,2375.0,2360.0,2220.0,1575.0,1530.0,1275.0,1390.0,1265.0,1585.0,1825.0,1420.0,980.0,835.0,990.0,975.0,1255.0,895.0,940.0,1075.0,1535.0,1540.0,1855.0,2270.0,2275.0,1925.0,2030.0,1830.0,1510.0,2005.0,1805.0,1550.0,2240.0,2465.0,2270.0,2280.0,2040.0,2125.0,2175.0,2365.0,2220.0,2130.0,1860.0,1440.0,1630.0,1340.0,1050.0,1220.0,935.0,1155.0,1100.0,750.0,1365.0,1085.0,695.0,1205.0],"ev":[100000.0,99980.4,99960.8,99941.21,99921.61,99901.93,99882.33,99862.74,99843.14,99823.46,99803.86,99784.27,99764.67,99744.99,99725.39,99705.8,99686.2,99666.52,99646.92,99627.33,99607.73,99588.05,99568.45,99548.85,99529.26,99509.66,99489.98,99470.38,99450.79,99431.19,99411.51,99391.91,99372.32,99352.72,99333.04,99313.44,99293.85,99274.25,99254.57,99234.97,99215.38,99195.78,99176.1,99156.5,99136.91,99117.31,99097.71,99078.03,99058.43,99038.84,99019.24,98999.56,98979.96,98960.37,98940.77,98921.09,98901.49,98881.9,98862.3,98842.62,98823.02,98803.43,98783.83,98764.15,98744.55,98724.96,98705.36,98685.76,98666.08,98646.48,98626.89,98607.29,98587.61,98568.01,98548.42,98528.82,98509.14,98489.54,98469.95,98450.35,98430.67,98411.07,98391.48,98371.88,98352.2,98332.6,98313.01,98293.41,98273.73,98254.13,98234.53,98214.94,98195.34,98175.66,98156.06,98136.47,98116.87,98097.19,98077.59,98058.0,98038.4,98018.72,97999.12,97979.53,97959.93,97940.25,97920.65,97901.06,97881.46,97861.78,97842.18,97822.58,97802.99,97783.39,97763.71,97744.11,97724.52,97704.92,97685.24,97665.64,97646.05,97626.45,97606.77,97587.17,97567.58,97547.98,97528.3,97508.7,97489.11,97469.51,97449.83,97430.23,97410.64,97391.04,97371.44,97351.76,97332.16,97312.57,97292.97,97273.29,97253.69,97234.1,97214.5,97194.82,97175.22,97155.63,97136.03,97116.35,97096.75,97077.16,97057.56,97037.88,97018.28,96998.69,96979.09,96959.49,96939.81,96920.21,96900.62,96881.02,96861.34,96841.74,96822.15,96802.55,96782.87,96763.27,96743.68,96724.08,96704.4,96684.8,96665.21,96645.61,96625.93,96606.33,96586.74,96567.14,96547.46,96527.86,96508.26,96488.67,96469.07,96449.39,96429.79,96410.2,96390.6,96370.92,96351.32,96331.73,96312.13,96292.45,96272.85,96253.26,96233.66,96213.98,96194.38,96174.79,96155.19,96135.51,96115.91,96096.31,96076.72,96057.12,96037.44,96017.84,95998.25,95978.65,95958.97,95939.37,95919.78,95900.18,95880.5,95860.9,95841.31,95821.71,95802.03,95782.43,95762.84,95743.24,95723.56,95703.96,95684.37,95664.77,95645.17,95625.49,95605.89,95586.3,95566.7,95547.02,95527.42,95507.83,95488.23,95468.55,95448.95,95429.36,95409.76,95390.08,95370.48,95350.89,95331.29,95311.61,95292.01,95272.42,95252.82,95233.22,95213.54,95193.94,95174.35,95154.75,95135.07,95115.47,95095.88,95076.28,95056.6,95037.0,95017.41,94997.81,94978.13,94958.53,94938.94,94919.34,94899.66,94880.06,94860.47,94840.87,94821.19,94801.59,94781.99,94762.4,94742.8,94723.12,94703.52,94683.93,94664.33,94644.65,94625.05,94605.46,94585.86,94566.18,94546.58,94526.99,94507.39,94487.71,94468.11,94448.52,94428.92,94409.24,94389.64,94370.04,94350.45,94330.85,94311.17,94291.57,94271.98,94252.38,94232.7,94213.1,94193.51,94173.91,94154.23,94134.63,94115.04,94095.44,94075.76,94056.16,94036.57,94016.97,93997.29,93977.69,93958.1,93938.5,93918.9,93899.22,93879.62,93860.03,93840.43,93820.75,93801.15,93781.56,93761.96,93742.28,93722.68,93703.09,93683.49,93663.81,93644.21,93624.62,93605.02,93585.34,93565.74,93546.15,93526.55,93506.95,93487.27,93467.67,93448.08,93428.48,93408.8,93389.2,93369.61,93350.01,93330.33,93310.73,93291.14,93271.54,93251.86,93232.26,93212.67,93193.07,93173.39,93153.79,93134.2,93114.6,93094.92,93075.32,93055.72,93036.13,93016.53,92996.85,92977.25,92957.66,92938.06,92918.38,92898.78,92879.19,92859.59,92839.91,92820.31,92800.72,92781.12,92761.44,92741.84,92722.25,92702.65,92682.97,92663.37,92643.77,92624.18,92604.58,92584.9,92565.3,92545.71,92526.11,92506.43,92486.83,92467.24,92447.64,92427.96,92408.36,92388.77,92369.17,92349.49,92329.89,92310.3,92290.7,92271.02,92251.42,92231.83,92212.23,92192.63,92172.95,92153.35,92133.76,92114.16,92094.48,92074.88,92055.29,92035.69,92016.01,91996.41,91976.82,91957.22,91937.54,91917.94,91898.35,91878.75,91859.07,91839.47,91819.88,91800.28,91780.6],"start":100000,"hands":102755,"rounds":100000,"edge":-0.5082,"net":8355.0,"wagered":1643880.0,"avg_bet":16.0,"final":108355.0,"max_drawdown":5190.0,"wins":43877,"losses":45944,"pushes":8499,"blackjacks":4650,"surrender":4435,"adherence":0.0},"outcomes":{"blackjack":4650,"win":39227,"loss":45944,"push":8499,"surrender":4435},"heatmap":{"rows":["4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21"],"cols":["2","3","4","5","6","7","8","9","10","A"],"ev":[[null,null,null,null,null,null,-0.045,-0.34,-0.308,-0.556],[-0.15,-0.135,-0.084,-0.132,-0.035,-0.208,-0.194,-0.36,-0.385,-0.5],[-0.106,-0.198,0.084,-0.248,0.185,-0.148,-0.291,-0.405,-0.383,-0.433],[-0.147,-0.123,-0.099,0.114,0.171,0.032,-0.199,-0.391,-0.402,-0.565],[0.021,-0.011,0.022,0.101,0.118,0.131,-0.067,-0.233,-0.263,-0.447],[0.003,0.103,0.137,0.151,0.121,0.199,0.15,-0.188,-0.238,-0.273],[0.147,0.209,0.293,0.305,0.284,0.217,0.121,0.114,-0.034,-0.241],[0.3,0.27,0.315,0.283,0.299,0.264,0.119,0.102,0.002,-0.125],[-0.223,-0.244,-0.23,-0.275,-0.143,-0.183,-0.284,-0.38,-0.438,-0.538],[-0.309,-0.212,-0.169,-0.093,-0.095,-0.219,-0.301,-0.394,-0.429,-0.57],[-0.314,-0.179,-0.15,-0.156,-0.135,-0.294,-0.287,-0.393,-0.457,-0.609],[-0.259,-0.201,-0.164,-0.115,-0.129,-0.307,-0.386,-0.406,-0.497,-0.605],[-0.238,-0.218,-0.138,-0.063,-0.091,-0.349,-0.342,-0.464,-0.492,-0.64],[-0.128,-0.111,-0.072,0.023,0.051,-0.09,-0.36,-0.372,-0.401,-0.651],[0.179,0.139,0.12,0.183,0.271,0.439,0.103,-0.115,-0.205,-0.388],[0.318,0.423,0.412,0.413,0.565,0.628,0.606,0.302,-0.01,-0.11],[0.646,0.658,0.652,0.698,0.753,0.78,0.802,0.743,0.461,0.165],[1.456,1.459,1.463,1.463,1.469,1.462,1.459,1.458,1.361,1.018]],"win":[[null,null,null,null,null,null,0.432,0.283,0.301,0.2],[0.407,0.406,0.445,0.421,0.469,0.317,0.327,0.292,0.269,0.232],[0.436,0.372,0.542,0.355,0.588,0.385,0.318,0.267,0.27,0.239],[0.379,0.41,0.433,0.505,0.561,0.395,0.33,0.254,0.256,0.188],[0.472,0.445,0.483,0.52,0.531,0.508,0.404,0.307,0.322,0.235],[0.471,0.531,0.54,0.54,0.529,0.557,0.524,0.325,0.331,0.307],[0.542,0.558,0.597,0.627,0.599,0.575,0.51,0.515,0.407,0.33],[0.614,0.596,0.631,0.604,0.61,0.589,0.533,0.509,0.446,0.339],[0.358,0.353,0.385,0.362,0.429,0.375,0.321,0.274,0.246,0.193],[0.341,0.389,0.411,0.434,0.448,0.363,0.308,0.265,0.248,0.19],[0.339,0.41,0.423,0.401,0.423,0.314,0.326,0.267,0.235,0.172],[0.365,0.396,0.398,0.429,0.417,0.312,0.274,0.266,0.048,0.177],[0.372,0.389,0.407,0.447,0.434,0.298,0.297,0.061,0.06,0.026],[0.367,0.391,0.401,0.436,0.455,0.298,0.259,0.258,0.245,0.123],[0.516,0.522,0.512,0.52,0.578,0.646,0.366,0.373,0.343,0.228],[0.592,0.651,0.642,0.645,0.726,0.761,0.74,0.481,0.439,0.382],[0.769,0.763,0.768,0.801,0.825,0.848,0.863,0.813,0.566,0.523],[0.993,0.988,0.992,0.997,1.0,0.995,0.998,0.99,0.926,0.699]],"hands":[[0,0,0,0,0,0,44,53,156,45],[113,96,119,121,113,101,98,89,379,82],[94,86,83,121,119,122,151,131,564,134],[190,195,203,184,205,185,176,197,757,186],[233,274,230,198,211,244,225,215,873,217],[289,292,285,285,306,291,273,255,1082,267],[360,407,362,354,349,355,306,332,1392,352],[466,408,406,424,438,406,360,371,1461,375],[755,743,691,723,672,694,683,742,2824,693],[797,797,823,860,795,796,743,731,2947,725],[726,680,688,664,711,650,715,690,2856,685],[699,682,713,685,633,615,691,662,2571,648],[596,625,621,582,602,527,538,575,2217,570],[602,591,568,624,600,577,591,570,2223,578],[486,577,480,544,509,540,487,512,2063,534],[510,487,520,470,481,473,480,474,1854,474],[837,843,839,811,845,855,779,812,3350,824],[407,415,377,390,417,422,419,401,1576,385]]},"count_buckets":[{"label":"-4","hands":22106,"ev":2.01,"win":42.2},{"label":"-3","hands":17054,"ev":2.21,"win":41.9},{"label":"-2","hands":29537,"ev":1.24,"win":42.4},{"label":"-1","hands":53197,"ev":1.1,"win":42.3},{"label":"0","hands":73449,"ev":-0.06,"win":42.9},{"label":"1","hands":49895,"ev":0.1,"win":42.6},{"label":"2","hands":27407,"ev":-0.89,"win":42.7},{"label":"3","hands":15903,"ev":-3.27,"win":44.2},{"label":"4","hands":8853,"ev":-1.23,"win":42.8},{"label":"+5+","hands":10974,"ev":-2.28,"win":42.9}],"leaderboard":[{"rank":1,"name":"Martingale","final":1675.0,"net":675.0,"edge":-2.52,"drawdown":855.0,"adherence":100.0,"hands":1013},{"rank":2,"name":"Hi-Lo spread","final":1150.0,"net":150.0,"edge":-0.87,"drawdown":1090.0,"adherence":100.0,"hands":1023},{"rank":3,"name":"Flat bettor","final":810.0,"net":-190.0,"edge":1.68,"drawdown":485.0,"adherence":100.0,"hands":1031},{"rank":4,"name":"Basic strategy","final":370.0,"net":-630.0,"edge":5.54,"drawdown":820.0,"adherence":100.0,"hands":1026},{"rank":5,"name":"Half Kelly","final":366.92,"net":-633.08,"edge":5.59,"drawdown":678.08,"adherence":100.0,"hands":1024}],"stats":{"tests":513,"quick_tests":510,"strategy_cases":376,"flat_hands":102755,"flat_edge":0.1213,"flat_net":-1375.0,"flat_bj":4650,"flat_surrender":4435,"count_hands":102755,"count_edge":-0.5082,"count_net":8355.0,"count_avg_bet":16.0,"flat_avg_bet":11.03,"flat_drawdown":3610.0,"count_drawdown":5190.0,"pooled_hands":308375,"pooled_edge":-0.4775,"pooled_net":23575.0}};</script>
+<script>
+/* Interactive blackjack presentation.
+   No external libraries. All charts are inline SVG, all demos run locally. */
+
+const DATA = window.DECK_DATA;
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const NS = "http://www.w3.org/2000/svg";
+const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+const SUITS = ["♠", "♥", "♦", "♣"];
+const RED = new Set(["♥", "♦"]);
+
+/* ------------------------------------------------------------------ */
+/* Small utilities                                                     */
+/* ------------------------------------------------------------------ */
+function esc(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+function svg(tag, attrs = {}, children = []) {
+  const node = document.createElementNS(NS, tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (value !== null && value !== undefined) node.setAttribute(key, value);
+  }
+  for (const child of children) node.appendChild(child);
+  return node;
+}
+function textNode(x, y, str, attrs = {}) {
+  const node = svg("text", { x, y, ...attrs });
+  node.textContent = str;
+  return node;
+}
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+function money(value) {
+  const rounded = Math.round(value);
+  return `$${rounded.toLocaleString("en-US")}`;
+}
+function percent(value, digits = 2) { return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}%`; }
+function css(name) { return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+function randInt(n) { return Math.floor(Math.random() * n); }
+function pick(list) { return list[randInt(list.length)]; }
+function seeded(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6D2B79F5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffle(list, rng = Math.random) {
+  const out = list.slice();
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+function rankValue(rank) {
+  if (rank === "A") return 11;
+  if (["10", "J", "Q", "K"].includes(rank)) return 10;
+  return Number(rank);
+}
+function handValue(cards) {
+  let hard = cards.reduce((sum, card) => sum + (card.rank === "A" ? 1 : rankValue(card.rank)), 0);
+  const hasAce = cards.some((card) => card.rank === "A");
+  const soft = hasAce && hard + 10 <= 21;
+  return { total: hard + (soft ? 10 : 0), hard, soft, bust: hard + (soft ? 10 : 0) > 21 };
+}
+function cardHTML(card, { small = false, hidden = false } = {}) {
+  if (hidden || !card) {
+    return `<div class="pcard back ${small ? "small" : ""}"><span>?</span><span class="suit">?</span></div>`;
+  }
+  const red = RED.has(card.suit) ? "red" : "";
+  return `<div class="pcard ${red} ${small ? "small" : ""}"><span>${card.rank}</span><span class="suit">${card.suit}</span></div>`;
+}
+function dealCard() {
+  return { rank: pick(RANKS), suit: pick(SUITS) };
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide navigation                                                    */
+/* ------------------------------------------------------------------ */
+const slides = $$(".slide");
+let current = -1;
+let overviewOpen = false;
+let notesOpen = false;
+
+function show(index, updateHash = true) {
+  if (!slides.length) return;
+  const next = Math.max(0, Math.min(slides.length - 1, index));
+  slides.forEach((slide, i) => {
+    slide.classList.toggle("active", i === next);
+    slide.classList.toggle("prev", i < next);
+  });
+  current = next;
+  const counter = $("#counter");
+  if (counter) counter.textContent = `${next + 1} / ${slides.length}`;
+  const bar = $("#progressBar");
+  if (bar) bar.style.width = `${((next + 1) / slides.length) * 100}%`;
+  const label = $("#sectionLabel");
+  if (label) label.textContent = "Blackjack · PROG1301";
+  renderNotes();
+  animateCounters(slides[next]);
+  if (updateHash) {
+    try { history.replaceState(null, "", `#slide-${next + 1}`); } catch (e) { /* file URLs */ }
+  }
+}
+function nextSlide() { show(current + 1); }
+function prevSlide() { show(current - 1); }
+function renderNotes() {
+  const panel = $("#notesContent");
+  if (!panel || current < 0) return;
+  const note = slides[current].querySelector(".notes");
+  panel.innerHTML = note ? note.innerHTML : "<p>No notes for this slide.</p>";
+}
+function buildOverview() {
+  const grid = $("#overviewGrid");
+  if (!grid) return;
+  clear(grid);
+  slides.forEach((slide, i) => {
+    const button = document.createElement("button");
+    button.className = "ov-card";
+    button.innerHTML = `<div class="num">${String(i + 1).padStart(2, "0")}</div><div class="ttl">${esc(slide.dataset.title || slide.querySelector("h1,h2")?.textContent || "Slide")}</div>`;
+    button.addEventListener("click", () => {
+      show(i);
+      toggleOverview(false);
+    });
+    grid.appendChild(button);
+  });
+}
+function toggleOverview(force) {
+  const node = $("#overview");
+  overviewOpen = force === undefined ? !overviewOpen : force;
+  node.classList.toggle("open", overviewOpen);
+}
+function toggleNotes(force) {
+  const node = $("#notesPanel");
+  notesOpen = force === undefined ? !notesOpen : force;
+  node.classList.toggle("open", notesOpen);
+}
+function toggleHelp(force) {
+  const node = $("#help");
+  const open = force === undefined ? !node.classList.contains("open") : force;
+  node.classList.toggle("open", open);
+}
+function toast(message) {
+  const node = $("#toast");
+  if (!node) return;
+  node.textContent = message;
+  node.classList.add("on");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => node.classList.remove("on"), 1800);
+}
+
+/* ------------------------------------------------------------------ */
+/* Timer                                                               */
+/* ------------------------------------------------------------------ */
+const TIMER_TARGET = 15 * 60;
+let elapsed = 0;
+let timerRunning = false;
+let timerStarted = false;
+function tick() {
+  if (timerRunning) {
+    elapsed += 1;
+    renderTimer();
+  }
+}
+function renderTimer() {
+  const node = $("#timer");
+  if (!node) return;
+  const remaining = Math.max(0, TIMER_TARGET - elapsed);
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  node.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} left`;
+  node.classList.toggle("warn", remaining <= 300 && remaining > 120);
+  node.classList.toggle("danger", remaining <= 120);
+}
+function startTimerOnce() {
+  if (!timerStarted) {
+    timerStarted = true;
+    timerRunning = true;
+    renderTimer();
+  }
+}
+function toggleTimer() {
+  timerStarted = true;
+  timerRunning = !timerRunning;
+  renderTimer();
+}
+
+/* ------------------------------------------------------------------ */
+/* Code highlighting and walkthrough                                   */
+/* ------------------------------------------------------------------ */
+const PY_KEYWORDS = new Set([
+  "def", "class", "return", "if", "elif", "else", "for", "while", "in", "not",
+  "and", "or", "is", "None", "True", "False", "import", "from", "as", "with",
+  "try", "except", "raise", "self", "lambda", "yield", "pass", "break",
+  "continue", "assert", "del", "global", "nonlocal", "async", "await",
+]);
+function highlightPython(source) {
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    const ch = source[i];
+    if (ch === "#") {
+      let j = source.indexOf("\n", i);
+      if (j < 0) j = source.length;
+      out += `<span class="com">${esc(source.slice(i, j))}</span>`;
+      i = j;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      let j = i + 1;
+      while (j < source.length) {
+        if (source[j] === "\\") { j += 2; continue; }
+        if (source[j] === quote) { j += 1; break; }
+        j += 1;
+      }
+      out += `<span class="str">${esc(source.slice(i, j))}</span>`;
+      i = j;
+      continue;
+    }
+    if (/[A-Za-z_]/.test(ch)) {
+      let j = i + 1;
+      while (j < source.length && /[A-Za-z0-9_]/.test(source[j])) j += 1;
+      const word = source.slice(i, j);
+      out += PY_KEYWORDS.has(word) ? `<span class="kw">${word}</span>` : esc(word);
+      i = j;
+      continue;
+    }
+    if (/[0-9]/.test(ch)) {
+      let j = i + 1;
+      while (j < source.length && /[0-9_.]/.test(source[j])) j += 1;
+      out += `<span class="num">${esc(source.slice(i, j))}</span>`;
+      i = j;
+      continue;
+    }
+    out += esc(ch);
+    i += 1;
+  }
+  return out;
+}
+function dedent(source) {
+  const lines = source.replace(/\t/g, "    ").replace(/^\n+|\n+$/g, "").split("\n");
+  const widths = lines.filter((line) => line.trim()).map((line) => line.match(/^ */)[0].length);
+  const min = widths.length ? Math.min(...widths) : 0;
+  return lines.map((line) => line.slice(min)).join("\n");
+}
+function prepareCode() {
+  $$("pre.code").forEach((pre) => {
+    const raw = dedent(pre.textContent);
+    const highlighted = highlightPython(raw).split("\n");
+    pre.innerHTML = highlighted
+      .map((line, i) => `<span class="line" data-line="${i + 1}">${line || " "}</span>`)
+      .join("");
+  });
+}
+function initCodeWalks() {
+  $$(".codewalk").forEach((walk) => {
+    const pre = walk.querySelector("pre.code");
+    const button = walk.querySelector(".next");
+    const explain = walk.querySelector(".explain");
+    if (!pre || !button || !explain) return;
+    let steps = [];
+    try { steps = JSON.parse(walk.dataset.steps || "[]"); } catch (e) { steps = []; }
+    if (!steps.length) return;
+    let index = -1;
+    const paint = () => {
+      $$(".line", pre).forEach((line) => line.classList.remove("hl", "dim"));
+      if (index < 0) {
+        explain.textContent = "Click next to walk through the code.";
+        button.textContent = "Next line";
+        return;
+      }
+      const step = steps[index];
+      const active = new Set(step.lines || []);
+      $$(".line", pre).forEach((line) => {
+        const num = Number(line.dataset.line);
+        line.classList.toggle("hl", active.has(num));
+        line.classList.toggle("dim", !active.has(num));
+      });
+      explain.textContent = step.text || "";
+      button.textContent = index === steps.length - 1 ? "Restart" : "Next line";
+    };
+    button.addEventListener("click", () => {
+      index += 1;
+      if (index >= steps.length) index = -1;
+      paint();
+    });
+    paint();
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* SVG chart helpers                                                   */
+/* ------------------------------------------------------------------ */
+function lineChart(host, options) {
+  if (!host) return;
+  clear(host);
+  const W = 900;
+  const H = options.height || 360;
+  const pad = { l: 70, r: 24, t: 22, b: 44 };
+  const series = (options.series || []).filter((s) => s && s.points && s.points.length);
+  if (!series.length) {
+    host.innerHTML = '<p class="small">No data.</p>';
+    return;
+  }
+  const allPoints = series.flatMap((s) => s.points);
+  const xMax = options.xMax || Math.max(...allPoints.map((p) => p[0])) || 1;
+  const xMin = options.xMin || 0;
+  const ys = allPoints.map((p) => p[1]);
+  let yMin = options.yMin !== undefined ? options.yMin : Math.min(...ys);
+  let yMax = options.yMax !== undefined ? options.yMax : Math.max(...ys);
+  if (yMin === yMax) { yMin -= 1; yMax += 1; }
+  const yPad = (yMax - yMin) * 0.08;
+  yMin -= yPad; yMax += yPad;
+  const sx = (x) => pad.l + ((x - xMin) / (xMax - xMin || 1)) * (W - pad.l - pad.r);
+  const sy = (y) => H - pad.b - ((y - yMin) / (yMax - yMin || 1)) * (H - pad.t - pad.b);
+
+  const legend = document.createElement("div");
+  legend.className = "chart-legend";
+  series.forEach((s) => {
+    const item = document.createElement("span");
+    item.innerHTML = `<i class="dot" style="background:${s.color}"></i>${esc(s.name)}`;
+    legend.appendChild(item);
+  });
+  host.appendChild(legend);
+
+  const wrap = document.createElement("div");
+  wrap.className = "chart-wrap";
+  const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" });
+  wrap.appendChild(root);
+  host.appendChild(wrap);
+
+  const muted = css("--muted") || "#cbd5e1";
+  const lineColor = css("--line") || "#2a3b55";
+  const ink = css("--ink") || "#f8fafc";
+
+  for (let i = 0; i <= 4; i += 1) {
+    const value = yMin + ((yMax - yMin) * i) / 4;
+    const y = sy(value);
+    root.appendChild(svg("line", { x1: pad.l, y1: y, x2: W - pad.r, y2: y, stroke: lineColor, "stroke-width": 1, opacity: 0.7 }));
+    root.appendChild(textNode(pad.l - 8, y + 4, options.yFormat ? options.yFormat(value) : Math.round(value).toLocaleString(), {
+      fill: muted, "font-size": 11, "text-anchor": "end",
+    }));
+  }
+  for (let i = 0; i <= 4; i += 1) {
+    const value = xMin + ((xMax - xMin) * i) / 4;
+    const x = sx(value);
+    root.appendChild(svg("line", { x1: x, y1: pad.t, x2: x, y2: H - pad.b, stroke: lineColor, "stroke-width": 1, opacity: 0.35 }));
+    root.appendChild(textNode(x, H - pad.b + 18, options.xFormat ? options.xFormat(value) : Math.round(value).toLocaleString(), {
+      fill: muted, "font-size": 11, "text-anchor": "middle",
+    }));
+  }
+
+  const zeroY = sy(0);
+  if (zeroY > pad.t && zeroY < H - pad.b) {
+    root.appendChild(svg("line", { x1: pad.l, y1: zeroY, x2: W - pad.r, y2: zeroY, stroke: muted, "stroke-width": 1, "stroke-dasharray": "4 4", opacity: 0.8 }));
+  }
+
+  series.forEach((s) => {
+    const visible = s.points.filter((p) => p[0] <= xMax + 0.001);
+    if (!visible.length) return;
+    const d = visible.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join(" ");
+    if (s.fill) {
+      const base = sy(Math.max(yMin, 0));
+      const area = `${d} L${sx(visible[visible.length - 1][0]).toFixed(1)},${base.toFixed(1)} L${sx(visible[0][0]).toFixed(1)},${base.toFixed(1)} Z`;
+      root.appendChild(svg("path", { d: area, fill: s.color, opacity: 0.14 }));
+    }
+    root.appendChild(svg("path", {
+      d, fill: "none", stroke: s.color, "stroke-width": s.width || 2.4,
+      "stroke-dasharray": s.dash || null, "stroke-linecap": "round", "stroke-linejoin": "round",
+    }));
+  });
+
+  root.appendChild(textNode(pad.l + (W - pad.l - pad.r) / 2, H - 8, options.xLabel || "", {
+    fill: muted, "font-size": 11, "text-anchor": "middle",
+  }));
+  root.appendChild(textNode(16, pad.t + (H - pad.t - pad.b) / 2, options.yLabel || "", {
+    fill: muted, "font-size": 11, "text-anchor": "middle",
+    transform: `rotate(-90 16 ${pad.t + (H - pad.t - pad.b) / 2})`,
+  }));
+
+  const tip = document.createElement("div");
+  tip.className = "chart-tip";
+  wrap.appendChild(tip);
+  const cross = svg("line", { x1: 0, y1: pad.t, x2: 0, y2: H - pad.b, stroke: muted, "stroke-width": 1, "stroke-dasharray": "3 3", opacity: 0 });
+  const dots = series.map((s) => svg("circle", { r: 4, fill: s.color, stroke: ink, "stroke-width": 1.5, opacity: 0 }));
+  root.appendChild(cross);
+  dots.forEach((dot) => root.appendChild(dot));
+
+  root.appendChild(svg("rect", { x: pad.l, y: pad.t, width: W - pad.l - pad.r, height: H - pad.t - pad.b, fill: "transparent" }));
+  root.addEventListener("mousemove", (event) => {
+    const rect = root.getBoundingClientRect();
+    const px = ((event.clientX - rect.left) / rect.width) * W;
+    if (px < pad.l || px > W - pad.r) { hide(); return; }
+    const xValue = xMin + ((px - pad.l) / (W - pad.l - pad.r)) * (xMax - xMin);
+    const first = series[0].points.filter((p) => p[0] <= xMax);
+    if (!first.length) return;
+    let nearest = first[0];
+    let best = Infinity;
+    first.forEach((p) => { const diff = Math.abs(p[0] - xValue); if (diff < best) { best = diff; nearest = p; } });
+    const x = sx(nearest[0]);
+    cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("opacity", 0.55);
+    const rows = series.map((s, i) => {
+      let point = s.points[0];
+      let bestDiff = Infinity;
+      s.points.forEach((p) => { const diff = Math.abs(p[0] - nearest[0]); if (diff < bestDiff) { bestDiff = diff; point = p; } });
+      dots[i].setAttribute("cx", sx(point[0]));
+      dots[i].setAttribute("cy", sy(point[1]));
+      dots[i].setAttribute("opacity", 1);
+      return `<div><i class="dot" style="background:${s.color};display:inline-block;margin-right:5px"></i>${esc(s.name)}: <b>${options.yFormat ? options.yFormat(point[1]) : Math.round(point[1]).toLocaleString()}</b></div>`;
+    }).join("");
+    tip.innerHTML = `<div class="small" style="margin-bottom:3px">${options.xFormat ? options.xFormat(nearest[0]) : Math.round(nearest[0]).toLocaleString()} hands</div>${rows}`;
+    tip.style.left = `${(x / W) * 100}%`;
+    tip.style.top = `${(Math.min(...series.map((s) => sy(s.points[0][1]))) / H) * 100}%`;
+    tip.style.opacity = 1;
+  });
+  root.addEventListener("mouseleave", hide);
+  function hide() {
+    tip.style.opacity = 0;
+    cross.setAttribute("opacity", 0);
+    dots.forEach((dot) => dot.setAttribute("opacity", 0));
+  }
+}
+
+function barChart(host, items, options = {}) {
+  if (!host) return;
+  clear(host);
+  const W = 900;
+  const rowH = options.rowH || 46;
+  const H = Math.max(160, items.length * rowH + 50);
+  const pad = { l: 190, r: 90, t: 12, b: 24 };
+  const values = items.map((item) => item.value);
+  const min = Math.min(0, ...values);
+  const max = Math.max(1, ...values);
+  const sx = (v) => pad.l + ((v - min) / (max - min || 1)) * (W - pad.l - pad.r);
+  const muted = css("--muted") || "#cbd5e1";
+  const ink = css("--ink") || "#f8fafc";
+  const line = css("--line") || "#2a3b55";
+  const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" });
+  const zero = sx(0);
+  root.appendChild(svg("line", { x1: zero, y1: 6, x2: zero, y2: H - 6, stroke: line, "stroke-width": 1, "stroke-dasharray": "4 4" }));
+  items.forEach((item, index) => {
+    const y = pad.t + index * rowH;
+    const x0 = sx(Math.min(0, item.value));
+    const x1 = sx(Math.max(0, item.value));
+    const rect = svg("rect", {
+      x: x0, y, width: Math.max(2, x1 - x0), height: rowH - 16,
+      rx: 6, fill: item.color || (item.value >= 0 ? "#34d399" : "#fb7185"),
+      opacity: 0.9,
+    });
+    root.appendChild(rect);
+    root.appendChild(textNode(12, y + rowH / 2 + 4, item.label, { fill: ink, "font-size": 13, "font-weight": 700 }));
+    root.appendChild(textNode(W - 10, y + rowH / 2 + 4, options.valueFormat ? options.valueFormat(item.value) : money(item.value), {
+      fill: muted, "font-size": 12, "text-anchor": "end",
+    }));
+    const title = svg("title", {});
+    title.textContent = `${item.label}: ${options.valueFormat ? options.valueFormat(item.value) : money(item.value)}`;
+    rect.appendChild(title);
+    rect.addEventListener("mousemove", (event) => {
+      const tip = host.querySelector(".chart-tip") || (() => {
+        const t = document.createElement("div"); t.className = "chart-tip"; host.appendChild(t); return t;
+      })();
+      tip.innerHTML = `<b>${esc(item.label)}</b><br>${options.valueFormat ? options.valueFormat(item.value) : money(item.value)}`;
+      const rectBox = host.getBoundingClientRect();
+      tip.style.left = `${event.clientX - rectBox.left}px`;
+      tip.style.top = `${event.clientY - rectBox.top - 10}px`;
+      tip.style.opacity = 1;
+    });
+    rect.addEventListener("mouseleave", () => {
+      const tip = host.querySelector(".chart-tip");
+      if (tip) tip.style.opacity = 0;
+    });
+  });
+  host.appendChild(root);
+}
+
+function donut(host, items, centerLabel) {
+  if (!host) return;
+  clear(host);
+  const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
+  const W = 860;
+  const H = 300;
+  const cx = 210;
+  const cy = 165;
+  const r = 110;
+  const stroke = 34;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" });
+  items.forEach((item) => {
+    const fraction = item.value / total;
+    const dash = fraction * circumference;
+    root.appendChild(svg("circle", {
+      cx, cy, r, fill: "none", stroke: item.color, "stroke-width": stroke,
+      "stroke-dasharray": `${dash} ${circumference - dash}`,
+      "stroke-dashoffset": -offset,
+      transform: `rotate(-90 ${cx} ${cy})`,
+      "stroke-linecap": "butt",
+    }));
+    offset += dash;
+  });
+  root.appendChild(textNode(cx, cy - 4, centerLabel, { fill: css("--ink"), "font-size": 20, "font-weight": 800, "text-anchor": "middle" }));
+  root.appendChild(textNode(cx, cy + 18, "settled hands", { fill: css("--muted"), "font-size": 11, "text-anchor": "middle" }));
+  items.forEach((item, i) => {
+    const y = 56 + i * 44;
+    root.appendChild(svg("rect", { x: 430, y: y - 12, width: 12, height: 12, rx: 3, fill: item.color }));
+    root.appendChild(textNode(452, y, item.label, { fill: css("--ink"), "font-size": 13, "font-weight": 700 }));
+    root.appendChild(textNode(630, y, `${item.value.toLocaleString()} (${((item.value / total) * 100).toFixed(1)}%)`, { fill: css("--muted"), "font-size": 12 }));
+  });
+  host.appendChild(root);
+}
+
+function colorFor(value, min, max, mode) {
+  const t = Math.max(0, Math.min(1, (value - min) / (max - min || 1)));
+  if (mode === "win") {
+    const a = [14, 116, 144];
+    const b = [34, 211, 238];
+    const rgb = a.map((v, i) => Math.round(v + (b[i] - v) * t));
+    return `rgb(${rgb.join(",")})`;
+  }
+  const low = [239, 68, 68];
+  const mid = document.body.classList.contains("light") ? [226, 232, 240] : [30, 41, 59];
+  const high = [34, 197, 94];
+  if (t < 0.5) {
+    const k = t * 2;
+    const rgb = low.map((v, i) => Math.round(v + (mid[i] - v) * k));
+    return `rgb(${rgb.join(",")})`;
+  }
+  const k = (t - 0.5) * 2;
+  const rgb = mid.map((v, i) => Math.round(v + (high[i] - v) * k));
+  return `rgb(${rgb.join(",")})`;
+}
+
+function heatmap(host, data, mode = "ev") {
+  if (!host) return;
+  clear(host);
+  const W = 980;
+  const H = 300;
+  const left = 46;
+  const top = 32;
+  const cellW = (W - left - 16) / data.cols.length;
+  const cellH = (H - top - 34) / data.rows.length;
+  const values = data[mode].flat().filter((v) => v !== null);
+  const min = mode === "win" ? 0.36 : -0.7;
+  const max = mode === "win" ? 0.58 : 0.7;
+  const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" });
+  const muted = css("--muted") || "#cbd5e1";
+  const ink = css("--ink") || "#f8fafc";
+  data.cols.forEach((col, c) => {
+    root.appendChild(textNode(left + c * cellW + cellW / 2, 18, col, { fill: muted, "font-size": 11, "text-anchor": "middle", "font-weight": 700 }));
+  });
+  data.rows.forEach((row, r) => {
+    root.appendChild(textNode(left - 8, top + r * cellH + cellH / 2 + 4, row, { fill: muted, "font-size": 10, "text-anchor": "end" }));
+    data.cols.forEach((col, c) => {
+      const value = data[mode][r][c];
+      const hands = data.hands[r][c];
+      const empty = document.body.classList.contains("light") ? "#cbd5e1" : "#1e293b";
+      const fill = value === null ? empty : colorFor(value, min, max, mode);
+      const rect = svg("rect", {
+        x: left + c * cellW + 1, y: top + r * cellH + 1,
+        width: cellW - 2, height: cellH - 2, rx: 3, fill,
+        opacity: value === null ? 0.45 : 0.95,
+      });
+      root.appendChild(rect);
+      if (value !== null && cellW > 42) {
+        const label = mode === "win" ? `${Math.round(value * 100)}` : value.toFixed(2);
+        root.appendChild(textNode(left + c * cellW + cellW / 2, top + r * cellH + cellH / 2 + 3, label, {
+          fill: mode === "win" && value > 0.47 ? "#0f172a" : ink,
+          "font-size": 9, "text-anchor": "middle", "font-weight": 700,
+        }));
+      }
+      rect.addEventListener("mousemove", (event) => {
+        const tip = host.querySelector(".chart-tip") || (() => {
+          const t = document.createElement("div"); t.className = "chart-tip"; host.appendChild(t); return t;
+        })();
+        const display = value === null ? "no data" : mode === "win" ? `${(value * 100).toFixed(1)}% win` : `${(value * 100).toFixed(2)}% EV`;
+        tip.innerHTML = `<b>${row} vs ${col}</b><br>${display}<br>${hands.toLocaleString()} hands`;
+        const box = host.getBoundingClientRect();
+        tip.style.left = `${event.clientX - box.left}px`;
+        tip.style.top = `${event.clientY - box.top - 10}px`;
+        tip.style.opacity = 1;
+      });
+      rect.addEventListener("mouseleave", () => {
+        const tip = host.querySelector(".chart-tip");
+        if (tip) tip.style.opacity = 0;
+      });
+    });
+  });
+  host.appendChild(root);
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 2: question cards                                             */
+/* ------------------------------------------------------------------ */
+function initQuestions() {
+  const strip = $("#qAnswer");
+  if (!strip) return;
+  $$(".qcard").forEach((card) => {
+    card.addEventListener("click", () => {
+      $$(".qcard").forEach((c) => c.classList.remove("on"));
+      card.classList.add("on");
+      strip.textContent = card.dataset.answer;
+    });
+  });
+  const reveal = $("#revealAll");
+  if (reveal) {
+    reveal.addEventListener("click", () => {
+      strip.textContent = "About 0.4% on the flat game, a positive edge with a count spread, and most progressive systems lose once the sample is long enough.";
+      $$(".qcard").forEach((c) => c.classList.add("on"));
+    });
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 3: mini table                                                 */
+/* ------------------------------------------------------------------ */
+const mini = { player: [], dealer: [], hole: true, over: false };
+function renderMini() {
+  const playerHost = $("#miniPlayer");
+  const dealerHost = $("#miniDealer");
+  if (!playerHost || !dealerHost) return;
+  playerHost.innerHTML = mini.player.map((card) => cardHTML(card, { small: true })).join("");
+  dealerHost.innerHTML = mini.dealer.map((card, i) => cardHTML(card, { small: true, hidden: mini.hole && i === 1 })).join("");
+  const pv = handValue(mini.player);
+  const dv = handValue(mini.dealer);
+  $("#miniPlayerTotal").textContent = mini.player.length ? `${pv.total}${pv.soft ? " soft" : ""}` : "—";
+  $("#miniDealerTotal").textContent = mini.hole ? "?" : `${dv.total}${dv.soft ? " soft" : ""}`;
+  $("#miniStatus").textContent = mini.over ? mini.status : "Your move.";
+}
+function miniDeal() {
+  mini.player = [dealCard(), dealCard()];
+  mini.dealer = [dealCard(), dealCard()];
+  mini.hole = true;
+  mini.over = false;
+  const pv = handValue(mini.player);
+  if (pv.total === 21) {
+    mini.status = "Blackjack. Pays 3:2.";
+    mini.over = true;
+    mini.hole = false;
+  }
+  renderMini();
+}
+function miniHit() {
+  if (mini.over) return;
+  mini.player.push(dealCard());
+  const pv = handValue(mini.player);
+  if (pv.bust) {
+    mini.over = true;
+    mini.hole = false;
+    mini.status = `Bust with ${pv.total}. Dealer wins.`;
+  } else if (pv.total === 21) {
+    miniStand();
+  }
+  renderMini();
+}
+function miniStand() {
+  if (mini.over) return;
+  mini.hole = false;
+  while (handValue(mini.dealer).total < 17) mini.dealer.push(dealCard());
+  const pv = handValue(mini.player);
+  const dv = handValue(mini.dealer);
+  let outcome = "Push.";
+  if (pv.bust) outcome = "Bust. Dealer wins.";
+  else if (dv.bust || pv.total > dv.total) outcome = "You win.";
+  else if (pv.total < dv.total) outcome = "Dealer wins.";
+  mini.status = `${outcome} You ${pv.total}, dealer ${dv.total}.`;
+  mini.over = true;
+  renderMini();
+}
+function initMini() {
+  if (!$("#miniTable")) return;
+  $("#miniDeal").addEventListener("click", miniDeal);
+  $("#miniHit").addEventListener("click", miniHit);
+  $("#miniStand").addEventListener("click", miniStand);
+  miniDeal();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 4: flow                                                       */
+/* ------------------------------------------------------------------ */
+const FLOW = [
+  { label: "Bet", fn: "start_hand(bet)", text: "Validate the bet against the table limits and the bankroll. Deduct it. The chips are now at risk." },
+  { label: "Deal", fn: "Shoe.draw_one()", text: "Shuffle if the cut card was reached. Deal player, dealer upcard, player, dealer hole." },
+  { label: "Peek", fn: "_resolve_naturals()", text: "Offer insurance on an ace. Peek for a dealer natural. Pay a player natural at 3:2 and stop." },
+  { label: "Player", fn: "available_actions() + act()", text: "Build the legal action list from the cards, bankroll and rules. Apply hit, stand, double, split or surrender." },
+  { label: "Dealer", fn: "_dealer_play()", text: "If any hand is still live, draw below 17 and stand on soft 17. No live hands means no dealer draw." },
+  { label: "Settle", fn: "_settle()", text: "Compare totals. Pay the stake back plus profit, or take it. Write one HandResult per hand." },
+  { label: "Record", fn: "Analytics.from_results()", text: "Turn the result records into house edge, streaks, drawdown and strategy adherence." },
+];
+function initFlow() {
+  const host = $("#flow");
+  const detail = $("#flowDetail");
+  if (!host || !detail) return;
+  FLOW.forEach((step, i) => {
+    const button = document.createElement("button");
+    button.className = `flow-step ${i === 0 ? "active" : ""}`;
+    button.innerHTML = `<span class="n">${i + 1}</span>${step.label}`;
+    button.addEventListener("click", () => {
+      $$(".flow-step", host).forEach((node) => node.classList.remove("active"));
+      button.classList.add("active");
+      detail.innerHTML = `<div class="fn">${esc(step.fn)}</div><p>${esc(step.text)}</p>`;
+    });
+    host.appendChild(button);
+  });
+  detail.innerHTML = `<div class="fn">${esc(FLOW[0].fn)}</div><p>${esc(FLOW[0].text)}</p>`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 5: architecture                                               */
+/* ------------------------------------------------------------------ */
+const ARCH = {
+  cli: ["Command line table", "Rich draws the table. The CLI only reads keys and calls the engine."],
+  notebook: ["Notebook demo", "32 cells. Each tier is a section. The notebook imports the same package the tests use."],
+  tests: ["Pytest suite", "513 tests. Scripted shoes make every payout, split and counter case deterministic."],
+  engine: ["BlackjackGame", "The state machine. Dealing, insurance, legal actions, dealer play, settlement."],
+  cards: ["cards.py", "Card and Shoe. Multi-deck, cut card, discard tray, Hi-Lo tag."],
+  hand: ["hand.py", "Hand. Cards, bet, total, soft or hard, pairs, split flags."],
+  rules: ["rules.py", "Validated table rules: decks, S17, DAS, surrender, insurance, limits."],
+  strategy: ["strategy.py", "Hard, soft and pair tables with the correct fallbacks."],
+  counting: ["counting.py", "Hi-Lo running count and true count."],
+  analytics: ["analytics.py", "House edge, streaks, drawdown, adherence."],
+  bots: ["bots.py", "Flat, Martingale, Hi-Lo spread, fractional Kelly."],
+  simulation: ["simulation.py", "Monte Carlo runs, shared-shoe competition, leaderboard."],
+  charts: ["charts.py", "Plotly dashboard, curves, heatmaps."],
+};
+function initArch() {
+  const detail = $("#archDetail");
+  if (!detail) return;
+  $$(".arch-node[data-key]").forEach((node) => {
+    node.addEventListener("click", () => {
+      const item = ARCH[node.dataset.key];
+      if (!item) return;
+      detail.innerHTML = `<h3>${esc(item[0])}</h3><p>${esc(item[1])}</p>`;
+      $$(".arch-node").forEach((n) => n.classList.remove("active"));
+      node.classList.add("active");
+    });
+  });
+  detail.innerHTML = `<h3>BlackjackGame</h3><p>The engine owns the rules. The CLI, notebook and tests all call it. Nothing else duplicates the game.</p>`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 6: ace builder                                                */
+/* ------------------------------------------------------------------ */
+const ace = { cards: [] };
+function renderAce() {
+  const host = $("#aceHand");
+  if (!host) return;
+  host.innerHTML = ace.cards.map((card) => cardHTML(card, { small: true })).join("");
+  const value = handValue(ace.cards);
+  const total = $("#aceTotal");
+  const soft = $("#aceSoft");
+  const note = $("#aceNote");
+  if (!ace.cards.length) {
+    total.textContent = "—"; soft.textContent = "Add a card"; note.textContent = "";
+    return;
+  }
+  total.textContent = value.bust ? `${value.total} BUST` : `${value.total}`;
+  soft.textContent = value.soft ? "soft" : "hard";
+  if (ace.cards.some((c) => c.rank === "A")) {
+    note.textContent = value.soft
+      ? `One ace is counting as 11. Hard total is ${value.hard}.`
+      : `The ace has fallen back to 1. Hard total is ${value.hard}.`;
+  } else {
+    note.textContent = "No ace in this hand.";
+  }
+}
+function initAce() {
+  const host = $("#aceButtons");
+  if (!host) return;
+  RANKS.forEach((rank) => {
+    const button = document.createElement("button");
+    button.className = "btn small";
+    button.textContent = rank;
+    button.addEventListener("click", () => {
+      ace.cards.push({ rank, suit: pick(SUITS) });
+      renderAce();
+    });
+    host.appendChild(button);
+  });
+  $("#aceReset").addEventListener("click", () => { ace.cards = []; renderAce(); });
+  renderAce();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 8: dealer                                                     */
+/* ------------------------------------------------------------------ */
+const dealer = { cards: [], rule: "S17", log: [] };
+function dealerDecision(cards, rule) {
+  const value = handValue(cards);
+  if (value.bust) return "Bust";
+  if (value.total < 17) return "Hit";
+  if (value.total === 17 && value.soft && rule === "H17") return "Hit";
+  return "Stand";
+}
+function renderDealer() {
+  const host = $("#dealerCards");
+  if (!host) return;
+  host.innerHTML = dealer.cards.map((card) => cardHTML(card)).join("");
+  const value = handValue(dealer.cards);
+  $("#dealerTotal").textContent = value.bust ? `${value.total} BUST` : `${value.total}${value.soft ? " soft" : ""}`;
+  const decision = dealerDecision(dealer.cards, dealer.rule);
+  $("#dealerDecision").textContent = decision;
+  $("#dealerLog").innerHTML = dealer.log.map((line) => `<div class="${line.kind}">${esc(line.text)}</div>`).join("");
+  $("#dealerS17").classList.toggle("on", dealer.rule === "S17");
+  $("#dealerH17").classList.toggle("on", dealer.rule === "H17");
+}
+function dealerReset(rule = dealer.rule) {
+  dealer.cards = [{ rank: "A", suit: "♠" }, { rank: "6", suit: "♥" }];
+  dealer.rule = rule;
+  dealer.log = [{ kind: "", text: `Start: A♠ 6♥ = ${handValue(dealer.cards).total} soft. Rule: ${rule}.` }];
+  renderDealer();
+}
+function dealerDeal() {
+  const decision = dealerDecision(dealer.cards, dealer.rule);
+  if (decision !== "Hit") {
+    toast(decision === "Bust" ? "Dealer is already bust." : "Dealer stands.");
+    return;
+  }
+  const card = dealCard();
+  dealer.cards.push(card);
+  const value = handValue(dealer.cards);
+  dealer.log.push({ kind: "hit", text: `Hit ${card.rank}${card.suit} → ${value.bust ? value.total + " BUST" : value.total + (value.soft ? " soft" : "")}.` });
+  if (value.bust) dealer.log.push({ kind: "stand", text: "Dealer busts." });
+  const next = dealerDecision(dealer.cards, dealer.rule);
+  if (next === "Stand") dealer.log.push({ kind: "stand", text: "Dealer stands." });
+  renderDealer();
+}
+function dealerAuto() {
+  let guard = 0;
+  while (dealerDecision(dealer.cards, dealer.rule) === "Hit" && guard < 12) {
+    dealerDeal();
+    guard += 1;
+  }
+}
+function initDealer() {
+  if (!$("#dealerDemo")) return;
+  $("#dealerS17").addEventListener("click", () => dealerReset("S17"));
+  $("#dealerH17").addEventListener("click", () => dealerReset("H17"));
+  $("#dealerDeal").addEventListener("click", dealerDeal);
+  $("#dealerAuto").addEventListener("click", dealerAuto);
+  $("#dealerReset").addEventListener("click", () => dealerReset());
+  dealerReset();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 9: payout calculator                                          */
+/* ------------------------------------------------------------------ */
+const pay = { bet: 25, outcome: "blackjack" };
+function renderPay() {
+  const value = pay.bet;
+  let returned = 0;
+  let profit = 0;
+  let label = "";
+  if (pay.outcome === "blackjack") { returned = value * 2.5; profit = value * 1.5; label = "Blackjack"; }
+  if (pay.outcome === "win") { returned = value * 2; profit = value; label = "Win"; }
+  if (pay.outcome === "push") { returned = value; profit = 0; label = "Push"; }
+  if (pay.outcome === "loss") { returned = 0; profit = -value; label = "Loss"; }
+  if (pay.outcome === "surrender") { returned = value * 0.5; profit = -value * 0.5; label = "Surrender"; }
+  if (pay.outcome === "insurance") {
+    const stake = value * 0.5;
+    returned = stake * 3; profit = stake * 2; label = "Insurance, dealer blackjack";
+  }
+  $("#payBetLabel").textContent = money(value);
+  $("#payStake").textContent = money(pay.outcome === "insurance" ? value * 0.5 : value);
+  $("#payReturn").textContent = money(returned);
+  const profitNode = $("#payProfit");
+  profitNode.textContent = `${profit >= 0 ? "+" : ""}${money(profit)}`;
+  profitNode.style.color = profit >= 0 ? "var(--green)" : "var(--red)";
+  $("#payOutcomeLabel").textContent = label;
+}
+function initPay() {
+  if (!$("#payoutCalc")) return;
+  const slider = $("#payBet");
+  slider.addEventListener("input", () => { pay.bet = Number(slider.value); renderPay(); });
+  $$("[data-outcome]").forEach((button) => {
+    button.addEventListener("click", () => {
+      pay.outcome = button.dataset.outcome;
+      $$("[data-outcome]").forEach((b) => b.classList.remove("primary"));
+      button.classList.add("primary");
+      renderPay();
+    });
+  });
+  renderPay();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 10: split demo                                                */
+/* ------------------------------------------------------------------ */
+const SPLIT_STEPS = [
+  { h1: ["8♠", "8♥"], h2: [], b1: 25, b2: 0, s1: "One hand", s2: "", n: "One hand, one bet. A pair of eights against a dealer nine.", r1: "", r2: "" },
+  { h1: ["8♠"], h2: ["8♥"], b1: 25, b2: 25, s1: "Split hand", s2: "Split hand", n: "Split: the second eight becomes a new hand, and a second $25 bet is posted.", r1: "", r2: "" },
+  { h1: ["8♠", "3♣"], h2: ["8♥", "2♦"], b1: 25, b2: 25, s1: "11", s2: "10", n: "Each hand draws its own card. Hand one has 11, hand two has 10.", r1: "", r2: "" },
+  { h1: ["8♠", "3♣", "10♠"], h2: ["8♥", "2♦"], b1: 50, b2: 25, s1: "21 · doubled", s2: "10", n: "Hand one doubles: another $25, one card, 21. Hand two stands on 10.", r1: "", r2: "" },
+  { h1: ["8♠", "3♣", "10♠"], h2: ["8♥", "2♦"], b1: 50, b2: 25, s1: "21 · doubled", s2: "10", n: "Dealer 9 + 7 = 16, draws 10 and busts. Both hands are live.", r1: "WIN +$50", r2: "WIN +$25" },
+  { h1: ["8♠", "3♣", "10♠"], h2: ["8♥", "2♦"], b1: 50, b2: 25, s1: "21 · doubled", s2: "10", n: "Settle: +$50 on hand one, +$25 on hand two. Total +$75. No state bleed.", r1: "WIN +$50", r2: "WIN +$25" },
+];
+let splitIndex = 0;
+function cardFromToken(token) {
+  return { rank: token.slice(0, -1), suit: token.slice(-1) };
+}
+function renderSplit() {
+  const step = SPLIT_STEPS[splitIndex];
+  const h1 = step.h1.map(cardFromToken);
+  const h2 = step.h2.map(cardFromToken);
+  $("#splitHand1").innerHTML = `
+    <div class="meta"><span>Hand one</span><span>${step.b1 ? money(step.b1) : "—"}</span></div>
+    <div class="hand-row small">${h1.map((c) => cardHTML(c, { small: true })).join("")}</div>
+    <div class="result">${esc(step.s1)} ${step.r1 ? `· <span class="${step.r1.startsWith("WIN") ? "green" : "red"}">${step.r1}</span>` : ""}</div>`;
+  $("#splitHand2").innerHTML = h2.length
+    ? `<div class="meta"><span>Hand two</span><span>${step.b2 ? money(step.b2) : "—"}</span></div>
+       <div class="hand-row small">${h2.map((c) => cardHTML(c, { small: true })).join("")}</div>
+       <div class="result">${esc(step.s2)} ${step.r2 ? `· <span class="${step.r2.startsWith("WIN") ? "green" : "red"}">${step.r2}</span>` : ""}</div>`
+    : `<div class="meta"><span>Hand two</span><span>—</span></div><div class="hand-row small"></div><div class="result">Appears after the split.</div>`;
+  $("#splitNote").textContent = step.n;
+  $("#splitStep").textContent = `${splitIndex + 1} / ${SPLIT_STEPS.length}`;
+}
+function initSplit() {
+  if (!$("#splitDemo")) return;
+  $("#splitNext").addEventListener("click", () => {
+    splitIndex = (splitIndex + 1) % SPLIT_STEPS.length;
+    renderSplit();
+  });
+  $("#splitReset").addEventListener("click", () => { splitIndex = 0; renderSplit(); });
+  renderSplit();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 11: strategy explorer                                         */
+/* ------------------------------------------------------------------ */
+const strategyState = { c1: "8", c2: "8", dealer: "9", view: "pair" };
+function tenValue(rank) { return rankValue(rank) === 10; }
+function pairKey(c1, c2) {
+  if (c1 === c2) return c1;
+  if (tenValue(c1) && tenValue(c2)) return "10";
+  return null;
+}
+function strategyCategory() {
+  const pair = pairKey(strategyState.c1, strategyState.c2);
+  if (pair) return "pair";
+  const cards = [{ rank: strategyState.c1 }, { rank: strategyState.c2 }];
+  return handValue(cards).soft ? "soft" : "hard";
+}
+function strategyCode(category, row, dealerIndex) {
+  const table = DATA.strategy[category];
+  const rowData = table[row];
+  if (!rowData) return "H";
+  return rowData[dealerIndex] || "H";
+}
+function actionForState() {
+  const cards = [{ rank: strategyState.c1 }, { rank: strategyState.c2 }];
+  const value = handValue(cards);
+  const pair = pairKey(strategyState.c1, strategyState.c2);
+  const dealerIndex = DATA.strategy.dealers.indexOf(strategyState.dealer);
+  if (value.total > 21) return { action: "Bust", why: "The hand is already over." };
+  if (cards.length === 2 && value.total === 21) return { action: "Blackjack", why: "Pays 3:2 before any action." };
+  let code;
+  let row;
+  let category = strategyCategory();
+  if (category === "pair") {
+    row = pair;
+    code = strategyCode("pair", row, dealerIndex);
+    if (code === "P") return { action: "Split", why: "Pair chart says split." };
+  }
+  if (!value.soft && cards.length === 2) {
+    if (value.total === 16 && ["9", "10", "A"].includes(strategyState.dealer)) return { action: "Surrender", why: "Late surrender is better than hitting 16 here." };
+    if (value.total === 15 && strategyState.dealer === "10") return { action: "Surrender", why: "Late surrender is better than hitting 15 here." };
+  }
+  category = value.soft ? "soft" : "hard";
+  row = category === "soft" ? value.total : Math.max(5, Math.min(21, value.total));
+  code = strategyCode(category, row, dealerIndex);
+  if (code === "D") return { action: "Double", why: "Double if allowed, otherwise hit." };
+  if (code === "d") return { action: "Double", why: "Double if allowed, otherwise stand." };
+  if (code === "S") return { action: "Stand", why: "Stand on this total." };
+  if (code === "P") return { action: "Split", why: "Pair chart says split." };
+  return { action: "Hit", why: "Hit on this total." };
+}
+function representativeHand(row, category) {
+  if (category === "pair") {
+    if (row === "10") return ["10", "J"];
+    return [row, row];
+  }
+  if (category === "soft") {
+    const rank = String(Number(row) - 11);
+    return ["A", rank === "1" ? "A" : rank];
+  }
+  const total = Number(row);
+  const pairs = {
+    5: ["2", "3"], 6: ["2", "4"], 7: ["3", "4"], 8: ["2", "6"], 9: ["4", "5"],
+    10: ["4", "6"], 11: ["5", "6"], 12: ["5", "7"], 13: ["6", "7"], 14: ["6", "8"],
+    15: ["7", "8"], 16: ["7", "9"], 17: ["8", "9"], 18: ["8", "10"], 19: ["9", "10"],
+    20: ["J", "Q"], 21: ["7", "7"],
+  };
+  return pairs[total] || ["10", "7"];
+}
+function renderStrategy() {
+  const host = $("#strategyGrid");
+  if (!host) return;
+  const category = strategyState.view;
+  const natural = strategyCategory();
+  const table = DATA.strategy[category];
+  let rows = [];
+  if (category === "hard") rows = Object.keys(table).map(Number).sort((a, b) => a - b);
+  if (category === "soft") rows = Object.keys(table).map(Number).sort((a, b) => a - b);
+  if (category === "pair") rows = ["A", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+  const dealerIndex = DATA.strategy.dealers.indexOf(strategyState.dealer);
+  let activeRow = null;
+  if (natural === category) {
+    const value = handValue([{ rank: strategyState.c1 }, { rank: strategyState.c2 }]);
+    activeRow = category === "pair" ? pairKey(strategyState.c1, strategyState.c2) : category === "soft" ? value.total : Math.max(5, Math.min(21, value.total));
+  }
+  const codeClass = (code) => ({ H: "hit", S: "stand", D: "double", d: "double", P: "split", R: "surrender" }[code] || "hit");
+  let html = `<div class="sg-head"></div>${DATA.strategy.dealers.map((d) => `<div class="sg-head">${d}</div>`).join("")}`;
+  rows.forEach((row) => {
+    html += `<div class="sg-row">${row}</div>`;
+    const rowData = table[row];
+    for (let i = 0; i < DATA.strategy.dealers.length; i += 1) {
+      const code = rowData[i];
+      const active = String(row) === String(activeRow) && i === dealerIndex ? "active" : "";
+      html += `<div class="sg-cell ${codeClass(code)} ${active}" data-row="${row}" data-col="${i}">${code}</div>`;
+    }
+  });
+  host.innerHTML = html;
+  $$(".sg-cell", host).forEach((cell) => {
+    cell.addEventListener("click", () => {
+      const row = cell.dataset.row;
+      const col = Number(cell.dataset.col);
+      const hand = representativeHand(row, category);
+      strategyState.c1 = hand[0];
+      strategyState.c2 = hand[1];
+      strategyState.dealer = DATA.strategy.dealers[col];
+      strategyState.view = category;
+      syncStrategySelectors();
+      renderStrategy();
+    });
+  });
+  const result = actionForState();
+  $("#strategyAction").textContent = result.action;
+  $("#strategyWhy").textContent = result.why;
+  const handText = `${strategyState.c1} ${strategyState.c2} vs ${strategyState.dealer}`;
+  $("#strategyHandLabel").textContent = handText;
+  $$(".strategy-tabs .tab").forEach((tab) => tab.classList.toggle("on", tab.dataset.cat === category));
+}
+function syncStrategySelectors() {
+  $("#sCard1").value = strategyState.c1;
+  $("#sCard2").value = strategyState.c2;
+  $("#sDealer").value = strategyState.dealer;
+}
+function initStrategy() {
+  if (!$("#strategyGrid")) return;
+  const options = RANKS.map((rank) => `<option value="${rank}">${rank}</option>`).join("");
+  $("#sCard1").innerHTML = options;
+  $("#sCard2").innerHTML = options;
+  $("#sDealer").innerHTML = DATA.strategy.dealers.map((d) => `<option value="${d}">${d}</option>`).join("");
+  syncStrategySelectors();
+  $("#sCard1").addEventListener("change", (e) => { strategyState.c1 = e.target.value; strategyState.view = strategyCategory(); renderStrategy(); });
+  $("#sCard2").addEventListener("change", (e) => { strategyState.c2 = e.target.value; strategyState.view = strategyCategory(); renderStrategy(); });
+  $("#sDealer").addEventListener("change", (e) => { strategyState.dealer = e.target.value; renderStrategy(); });
+  $$(".strategy-tabs .tab").forEach((tab) => {
+    tab.addEventListener("click", () => { strategyState.view = tab.dataset.cat; renderStrategy(); });
+  });
+  $("#randomHand").addEventListener("click", () => {
+    strategyState.c1 = pick(RANKS);
+    strategyState.c2 = pick(RANKS);
+    strategyState.dealer = pick(DATA.strategy.dealers);
+    strategyState.view = strategyCategory();
+    syncStrategySelectors();
+    renderStrategy();
+  });
+  renderStrategy();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 12: test mosaic                                               */
+/* ------------------------------------------------------------------ */
+function initMosaic() {
+  const host = $("#testMosaic");
+  if (!host) return;
+  for (let i = 0; i < 384; i += 1) {
+    const cell = document.createElement("i");
+    if (i < 376) {
+      cell.style.opacity = String(0.55 + (i % 5) * 0.08);
+    } else {
+      cell.style.opacity = "0.12";
+    }
+    host.appendChild(cell);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 14: shoe                                                      */
+/* ------------------------------------------------------------------ */
+const shoeState = { decks: 6, pen: 0.75, cards: [], dealt: 0, shuffles: 0, last: [] };
+function buildShoe() {
+  const cards = [];
+  for (let d = 0; d < shoeState.decks; d += 1) {
+    SUITS.forEach((suit) => RANKS.forEach((rank) => cards.push({ rank, suit })));
+  }
+  shoeState.cards = shuffle(cards);
+  shoeState.dealt = 0;
+  shoeState.last = [];
+}
+function shoeCut() { return Math.floor(52 * shoeState.decks * shoeState.pen); }
+function renderShoe() {
+  const total = 52 * shoeState.decks;
+  const remaining = shoeState.cards.length;
+  const cut = shoeCut();
+  const pct = (remaining / total) * 100;
+  $("#shoeBar").style.width = `${pct}%`;
+  $("#shoeCut").style.left = `${shoeState.pen * 100}%`;
+  $("#shoeRemaining").textContent = remaining.toLocaleString();
+  $("#shoeDecks").textContent = (remaining / 52).toFixed(1);
+  $("#shoeDiscard").textContent = shoeState.dealt.toLocaleString();
+  $("#shoeShuffles").textContent = shoeState.shuffles;
+  $("#shoeStatus").textContent = shoeState.dealt >= cut ? "Cut card reached. Shuffle." : "Dealing.";
+  $("#shoeStatus").className = shoeState.dealt >= cut ? "amber" : "green";
+  const last = shoeState.last.slice(-5);
+  $("#shoeLast").innerHTML = last.length
+    ? last.map((c) => cardHTML(c, { small: true })).join("")
+    : '<span class="small">Dealt cards appear here.</span>';
+}
+function shoeDeal(n) {
+  if (shoeState.cards.length === 0 || shoeState.dealt >= shoeCut()) {
+    toast("Cut card reached. Press Shuffle.");
+    return;
+  }
+  for (let i = 0; i < n; i += 1) {
+    if (!shoeState.cards.length || shoeState.dealt >= shoeCut()) break;
+    const card = shoeState.cards.pop();
+    shoeState.dealt += 1;
+    shoeState.last.push(card);
+  }
+  renderShoe();
+}
+function shoeShuffle() {
+  buildShoe();
+  shoeState.shuffles += 1;
+  renderShoe();
+}
+function initShoe() {
+  if (!$("#shoeDemo")) return;
+  $("#shoeDecksSel").addEventListener("change", (e) => {
+    shoeState.decks = Number(e.target.value);
+    shoeShuffle();
+  });
+  $("#shoePen").addEventListener("input", (e) => {
+    shoeState.pen = Number(e.target.value) / 100;
+    $("#shoePenLabel").textContent = `${e.target.value}%`;
+    renderShoe();
+  });
+  $("#shoeDeal1").addEventListener("click", () => shoeDeal(1));
+  $("#shoeDeal5").addEventListener("click", () => shoeDeal(5));
+  $("#shoeShuffle").addEventListener("click", shoeShuffle);
+  buildShoe();
+  renderShoe();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 15: counting                                                  */
+/* ------------------------------------------------------------------ */
+const countState = { cards: [], running: 0, seen: 0, last: null, hide: false, rng: seeded(1301) };
+function buildCountShoe() {
+  const cards = [];
+  for (let d = 0; d < 2; d += 1) SUITS.forEach((suit) => RANKS.forEach((rank) => cards.push({ rank, suit })));
+  countState.cards = shuffle(cards, countState.rng);
+  countState.running = 0;
+  countState.seen = 0;
+  countState.last = null;
+  countState.hide = false;
+}
+function tagOf(card) {
+  if (["2", "3", "4", "5", "6"].includes(card.rank)) return 1;
+  if (["7", "8", "9"].includes(card.rank)) return 0;
+  return -1;
+}
+function renderCount() {
+  const remaining = countState.cards.length;
+  const decks = remaining / 52;
+  const trueCount = countState.running / Math.max(0.5, decks);
+  $("#countLast").innerHTML = countState.last ? cardHTML(countState.last) : cardHTML(null, { hidden: true });
+  $("#countLastLabel").textContent = countState.last ? `${countState.last.rank}${countState.last.suit} · ${tagOf(countState.last) > 0 ? "+1" : tagOf(countState.last) < 0 ? "-1" : "0"}` : "Deal a card";
+  $("#countRunning").textContent = countState.hide ? "?" : (countState.running > 0 ? `+${countState.running}` : String(countState.running));
+  $("#countTrue").textContent = countState.hide ? "?" : trueCount.toFixed(2);
+  $("#countDecks").textContent = decks.toFixed(1);
+  const units = trueCount < 1 ? 1 : Math.min(8, Math.max(1, Math.round(trueCount)));
+  $("#countUnits").innerHTML = Array.from({ length: 8 }, (_, i) => `<span class="chip" style="${i < units ? "border-color:var(--green);color:var(--green)" : "opacity:.35"}">${i + 1}u</span>`).join("");
+  $("#countHide").textContent = countState.hide ? "Reveal count" : "Hide count";
+}
+function countDeal() {
+  if (!countState.cards.length) { toast("Shoe empty. Reset."); return; }
+  const card = countState.cards.pop();
+  countState.last = card;
+  countState.running += tagOf(card);
+  countState.seen += 1;
+  renderCount();
+}
+function initCount() {
+  if (!$("#countDemo")) return;
+  $("#countDeal").addEventListener("click", countDeal);
+  $("#countReset").addEventListener("click", () => { buildCountShoe(); renderCount(); });
+  $("#countHide").addEventListener("click", () => { countState.hide = !countState.hide; renderCount(); });
+  buildCountShoe();
+  renderCount();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 16: Monte Carlo                                               */
+/* ------------------------------------------------------------------ */
+const mc = { xMax: 0, showFlat: true, showCount: true, showEv: true, animating: false };
+function mcRender() {
+  const host = $("#mcChart");
+  if (!host) return;
+  const flat = DATA.flat;
+  const counting = DATA.counting;
+  const max = Math.min(flat.hands, counting.hands);
+  if (!mc.xMax) mc.xMax = max;
+  const flatPoints = flat.indices.map((x, i) => [x, flat.bankroll[i]]).filter((p) => p[0] <= mc.xMax);
+  const countPoints = counting.indices.map((x, i) => [x, counting.bankroll[i]]).filter((p) => p[0] <= mc.xMax);
+  const evPoints = flat.indices.map((x, i) => [x, flat.ev[i]]).filter((p) => p[0] <= mc.xMax);
+  const series = [];
+  if (mc.showFlat) series.push({ name: "Flat basic strategy", color: "#22d3ee", points: flatPoints });
+  if (mc.showCount) series.push({ name: "Hi-Lo spread", color: "#34d399", points: countPoints });
+  if (mc.showEv) series.push({ name: "Theoretical EV", color: "#94a3b8", points: evPoints, dash: "6 5", width: 1.8 });
+  lineChart(host, {
+    series, xMax: mc.xMax, xMin: 0, xLabel: "Settled hands", yLabel: "Bankroll ($)", height: window.innerWidth < 700 ? 420 : 240,
+    yFormat: (v) => `$${Math.round(v / 1000)}k`,
+    xFormat: (v) => v >= 1000 ? `${Math.round(v / 1000)}k` : Math.round(v),
+  });
+  $("#mcRangeLabel").textContent = `${Math.round(mc.xMax).toLocaleString()} hands`;
+}
+function mcPlay() {
+  if (mc.animating) return;
+  const max = Math.min(DATA.flat.hands, DATA.counting.hands);
+  mc.animating = true;
+  mc.xMax = 0;
+  const start = performance.now();
+  const duration = 2200;
+  function frame(now) {
+    const t = Math.min(1, (now - start) / duration);
+    mc.xMax = Math.max(1, Math.round(max * t));
+    mcRender();
+    if (t < 1) requestAnimationFrame(frame);
+    else { mc.animating = false; mc.xMax = max; mcRender(); }
+  }
+  requestAnimationFrame(frame);
+}
+function initMC() {
+  if (!$("#mcChart")) return;
+  mc.xMax = Math.min(DATA.flat.hands, DATA.counting.hands);
+  $("#mcRange").max = String(mc.xMax);
+  $("#mcRange").value = String(mc.xMax);
+  $("#mcRange").addEventListener("input", (e) => { mc.xMax = Number(e.target.value); mcRender(); });
+  $("#mcFlat").addEventListener("change", (e) => { mc.showFlat = e.target.checked; mcRender(); });
+  $("#mcCount").addEventListener("change", (e) => { mc.showCount = e.target.checked; mcRender(); });
+  $("#mcEv").addEventListener("change", (e) => { mc.showEv = e.target.checked; mcRender(); });
+  $("#mcPlay").addEventListener("click", mcPlay);
+  mcRender();
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 17: risk tabs                                                 */
+/* ------------------------------------------------------------------ */
+function renderRisk(tab) {
+  const host = $("#riskPanel");
+  if (!host) return;
+  clear(host);
+  $$("#riskTabs .tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+  if (tab === "outcomes") {
+    const counts = DATA.outcomes;
+    donut(host, [
+      { label: "Blackjack", value: counts.blackjack, color: "#34d399" },
+      { label: "Win", value: counts.win, color: "#22d3ee" },
+      { label: "Push", value: counts.push, color: "#94a3b8" },
+      { label: "Loss", value: counts.loss, color: "#fb7185" },
+      { label: "Surrender", value: counts.surrender, color: "#fbbf24" },
+    ], Math.round(DATA.flat.hands / 1000) + "k");
+    $("#riskCaption").textContent = "Most hands lose, but blackjacks pay 3:2 and doubles recover the difference. The edge is small on every single hand.";
+  }
+  if (tab === "drawdown") {
+    const points = DATA.flat.drawdown_indices.map((x, i) => [x, DATA.flat.drawdown[i]]);
+    lineChart(host, {
+      series: [{ name: "Flat strategy drawdown", color: "#fb7185", points, fill: true }],
+      xMax: Math.max(...points.map((p) => p[0])), xLabel: "Settled hands", yLabel: "Below peak ($)",
+      yFormat: (v) => `$${Math.round(v)}`, xFormat: (v) => v >= 1000 ? `${Math.round(v / 1000)}k` : Math.round(v),
+      height: window.innerWidth < 700 ? 420 : 300,
+    });
+    $("#riskCaption").textContent = `The worst underwater point in this run was ${money(DATA.flat.max_drawdown)}. A positive edge does not mean a smooth ride.`;
+  }
+  if (tab === "heatmap") {
+    const controls = document.createElement("div");
+    controls.className = "btn-row";
+    controls.style.marginBottom = "8px";
+    controls.innerHTML = `<button class="btn small primary" id="hmEv">Player EV</button><button class="btn small" id="hmWin">Win rate</button><span class="small">Hover any cell for the sample size.</span>`;
+    host.appendChild(controls);
+    const box = document.createElement("div");
+    box.className = "heatmap-wrap";
+    host.appendChild(box);
+    const paint = (mode) => {
+      heatmap(box, DATA.heatmap, mode);
+      $("#hmEv").classList.toggle("primary", mode === "ev");
+      $("#hmWin").classList.toggle("primary", mode === "win");
+    };
+    controls.querySelector("#hmEv").addEventListener("click", () => paint("ev"));
+    controls.querySelector("#hmWin").addEventListener("click", () => paint("win"));
+    paint("ev");
+    $("#riskCaption").textContent = "Rows are the player's starting total, columns are the dealer upcard. Red is a house edge, green is a player edge.";
+  }
+}
+function initRisk() {
+  if (!$("#riskPanel")) return;
+  $$("#riskTabs .tab").forEach((tab) => tab.addEventListener("click", () => renderRisk(tab.dataset.tab)));
+  renderRisk("outcomes");
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 18: leaderboard                                               */
+/* ------------------------------------------------------------------ */
+function renderLeaderboard(metric = "final") {
+  const host = $("#leaderboardChart");
+  if (!host) return;
+  const items = DATA.leaderboard.map((row) => ({
+    label: `${row.rank}. ${row.name}`,
+    value: metric === "final" ? row.final : row.edge,
+    color: metric === "final"
+      ? (row.net >= 0 ? "#34d399" : "#fb7185")
+      : (row.edge <= 0 ? "#34d399" : "#fb7185"),
+  }));
+  barChart(host, items, {
+    valueFormat: metric === "final" ? (v) => money(v) : (v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`,
+    rowH: 50,
+  });
+  $$("#lbTabs .tab").forEach((b) => b.classList.toggle("on", b.dataset.metric === metric));
+}
+function initLeaderboard() {
+  if (!$("#leaderboardChart")) return;
+  $$("#lbTabs .tab").forEach((b) => b.addEventListener("click", () => renderLeaderboard(b.dataset.metric)));
+  renderLeaderboard("final");
+}
+
+/* ------------------------------------------------------------------ */
+/* Slide 19: counters                                                  */
+/* ------------------------------------------------------------------ */
+function animateNumber(node, target, suffix = "") {
+  if (!node) return;
+  const start = performance.now();
+  const duration = 900;
+  function frame(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    node.textContent = `${Math.round(target * eased).toLocaleString()}${suffix}`;
+    if (t < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function animateCounters(slide) {
+  $$("[data-count]", slide).forEach((node) => {
+    if (node.dataset.animated === "1") return;
+    node.dataset.animated = "1";
+    animateNumber(node, Number(node.dataset.count), node.dataset.suffix || "");
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Keyboard, touch, theme                                              */
+/* ------------------------------------------------------------------ */
+function bindKeys() {
+  document.addEventListener("keydown", (event) => {
+    startTimerOnce();
+    const tag = (event.target.tagName || "").toLowerCase();
+    if (["input", "select", "textarea"].includes(tag)) return;
+    const key = event.key;
+    if (["ArrowRight", "PageDown", " "].includes(key)) { event.preventDefault(); nextSlide(); }
+    else if (["ArrowLeft", "PageUp"].includes(key)) { event.preventDefault(); prevSlide(); }
+    else if (key === "Home") { event.preventDefault(); show(0); }
+    else if (key === "End") { event.preventDefault(); show(slides.length - 1); }
+    else if (key.toLowerCase() === "o") { toggleOverview(); }
+    else if (key.toLowerCase() === "n") { toggleNotes(); }
+    else if (key.toLowerCase() === "t") { toggleTimer(); }
+    else if (key.toLowerCase() === "f") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+    else if (key.toLowerCase() === "l") {
+      document.body.classList.toggle("light");
+      $("#themeBtn").textContent = document.body.classList.contains("light") ? "Dark" : "Light";
+      renderAllCharts();
+    }
+    else if (key === "?" || key === "h") { toggleHelp(); }
+    else if (key === "Escape") { toggleHelp(false); toggleOverview(false); toggleNotes(false); }
+  });
+  document.addEventListener("click", startTimerOnce, { once: true });
+  let touchX = null;
+  document.addEventListener("touchstart", (e) => { touchX = e.changedTouches[0].clientX; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 60) { if (dx < 0) nextSlide(); else prevSlide(); }
+    touchX = null;
+  }, { passive: true });
+}
+function renderAllCharts() {
+  if ($("#mcChart")) mcRender();
+  if ($("#leaderboardChart")) renderLeaderboard($("#lbTabs .tab.on")?.dataset.metric || "final");
+  if ($("#riskPanel")) renderRisk($("#riskTabs .tab.on")?.dataset.tab || "outcomes");
+}
+
+/* ------------------------------------------------------------------ */
+/* Startup                                                             */
+/* ------------------------------------------------------------------ */
+function init() {
+  prepareCode();
+  initCodeWalks();
+  initQuestions();
+  initMini();
+  initFlow();
+  initArch();
+  initAce();
+  initDealer();
+  initPay();
+  initSplit();
+  initStrategy();
+  initMosaic();
+  initShoe();
+  initCount();
+  initMC();
+  initRisk();
+  initLeaderboard();
+  buildOverview();
+  bindKeys();
+  const hash = (location.hash || "").match(/slide-(\d+)/);
+  show(hash ? Number(hash[1]) - 1 : 0, false);
+  setInterval(tick, 1000);
+  renderTimer();
+  $("#timer").addEventListener("click", toggleTimer);
+  $("#notesBtn").addEventListener("click", () => toggleNotes());
+  $("#overviewBtn").addEventListener("click", () => toggleOverview());
+  $("#themeBtn").addEventListener("click", () => {
+    document.body.classList.toggle("light");
+    $("#themeBtn").textContent = document.body.classList.contains("light") ? "Dark" : "Light";
+    renderAllCharts();
+  });
+  $("#fullBtn").addEventListener("click", () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  });
+  $("#helpBtn").addEventListener("click", () => toggleHelp());
+  $("#helpClose").addEventListener("click", () => toggleHelp(false));
+  $("#overviewClose").addEventListener("click", () => toggleOverview(false));
+}
+document.addEventListener("DOMContentLoaded", init);
+
+</script>
+</body>
+</html>

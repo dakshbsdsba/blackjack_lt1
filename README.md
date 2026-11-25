@@ -2,7 +2,31 @@
 
 A playable blackjack table and a Monte Carlo research tool in one Python project. The rules engine, basic strategy chart, Hi-Lo counter, betting bots and Plotly charts are separate modules. A demonstration notebook walks through every tier, and the same functions are covered by 513 pytest tests.
 
-Built as a group project for a Python programming course.
+Built as a group project for PROG1301, a Python programming course, by Daksh, Julia, Clark, Victoria and Ziah.
+
+## Division of labor
+
+All five members listed below are part of the project and the submission. The roles match the presenter assignments in the 13-slide deck. The codebase is shared, but each person owned the following areas and was the primary presenter for the listed slides.
+
+| Member | Role | Primary ownership | Deck slides |
+| --- | --- | --- | --- |
+| Daksh | Lead: integration and flow | End-to-end system, round state machine, module handoffs, repo integration, final demo | 1, 4, 11, 12, 13 |
+| Julia | Technical: strategy and numbers | Basic strategy chart, Hi-Lo counting, Monte Carlo, risk charts, numerical checks | 6, 7, 8, 9 |
+| Clark | Engine: rules and tests | Cards, hand values, dealer policy, settlement, pytest suite, engine edge cases | 5, 10 |
+| Victoria | Delivery: demo and speaking | Table walkthrough, player actions, terminal UI polish, live narration | 3 |
+| Ziah | Recall: flashcards and backup | Key terms, definitions, question prompts, flashcard content, backup notes | 2 |
+
+**Shared work.** Every member can run the app and the notebook, reviewed the deck, and contributed to the final integration. The table is the primary division, not a fence around contributions.
+
+**Artifacts by area.**
+
+- Daksh: `blackjack/engine.py` state machine, `blackjack/cli.py` integration, `presentation/` delivery.
+- Julia: `blackjack/strategy.py`, `blackjack/counting.py`, `blackjack/simulation.py`, `blackjack/charts.py`, notebook analysis.
+- Clark: `blackjack/cards.py`, `blackjack/hand.py`, `blackjack/rules.py`, dealer and settlement paths in `blackjack/engine.py`, `tests/`.
+- Victoria: `blackjack/cli.py` table flow, demo script, `presentation/` narration and UI checks.
+- Ziah: glossary, definitions, Q&A prompts, `presentation/` backup notes.
+
+The 13-slide deck is `presentation/blackjack_presentation.html`. The previous 22-slide build remains in commit history, and the notebook still demonstrates the material that was cut from the talk.
 
 ## Quick start
 

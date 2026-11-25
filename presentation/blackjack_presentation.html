@@ -646,13 +646,204 @@ body.light::after { opacity: 0.18; }
   .slide-inner { max-height: none; justify-content: flex-start; }
 }
 
+/* Projection typography: readable from the back row */
+.slide { padding: 3.6vh 3.6vw 7.2vh; }
+.slide-inner { width: min(1560px, 100%); gap: clamp(14px, 1.8vh, 22px); }
+.kicker { font-size: clamp(0.85rem, 0.95vw, 1.05rem); letter-spacing: 0.14em; }
+h1 { font-size: clamp(3rem, 6.2vw, 6.5rem); }
+h2 { font-size: clamp(2.1rem, 3.9vw, 4.15rem); line-height: 1.04; }
+h3 { font-size: clamp(1.2rem, 1.65vw, 1.75rem); }
+p, li { font-size: clamp(1.15rem, 1.5vw, 1.62rem); line-height: 1.42; }
+.lede { font-size: clamp(1.4rem, 1.9vw, 1.95rem); line-height: 1.35; }
+.small { font-size: clamp(0.95rem, 1.05vw, 1.15rem); line-height: 1.4; }
+.note { font-size: clamp(1rem, 1.1vw, 1.2rem); line-height: 1.4; }
+.title-meta { font-size: 0.98rem; gap: 12px 26px; }
+.btn { font-size: clamp(0.9rem, 1vw, 1.05rem); padding: 10px 18px; }
+.btn.small { font-size: 0.85rem; }
+.chip { font-size: 0.9rem; }
+.qcard { min-height: 185px; padding: 22px; gap: 12px; }
+.qcard .qnum { font-size: 0.82rem; }
+.qcard strong { font-size: clamp(1.25rem, 1.7vw, 1.65rem); }
+.qcard span { font-size: 1.05rem; }
+.answer-strip { font-size: clamp(1.15rem, 1.35vw, 1.4rem); padding: 16px 20px; min-height: 70px; }
+.flow-step { font-size: clamp(0.9rem, 1.05vw, 1.05rem); padding: 12px 15px; }
+.flow-detail .fn { font-size: 0.95rem; }
+.arch-node { font-size: 1rem; padding: 11px 15px; }
+.arch-node.core { font-size: 1.2rem; padding: 14px 26px; }
+.code { font-size: clamp(0.88rem, 1.05vw, 1.05rem); line-height: 1.48; }
+.explain { font-size: 1rem; }
+.dealer-log { font-size: 0.95rem; }
+.toggle button { font-size: 0.88rem; padding: 7px 12px; }
+.payout-row { font-size: 0.95rem; }
+.payout-result .box .k { font-size: 0.8rem; }
+.payout-result .box .v { font-size: 1.6rem; }
+.formula { font-size: 0.92rem; }
+.strategy-grid { font-size: clamp(0.72rem, 0.9vw, 0.92rem); grid-auto-rows: minmax(23px, auto); gap: 3px; }
+.selectors select { font-size: 0.95rem; padding: 8px 10px; }
+.action-badge .act { font-size: clamp(1.35rem, 1.9vw, 1.8rem); }
+.action-badge .why { font-size: 0.92rem; }
+.tab { font-size: 0.86rem; padding: 7px 13px; }
+.chart-legend { font-size: 0.9rem; gap: 18px; }
+.check { font-size: 0.9rem; }
+.terminal { font-size: 0.92rem; line-height: 1.55; }
+.table { font-size: 0.95rem; }
+.table th { font-size: 0.82rem; }
+.bot-card .name { font-size: 1rem; }
+.bot-card .rule { font-size: 0.86rem; }
+.bot-card .tag { font-size: 0.74rem; }
+.tier li { font-size: 0.95rem; margin: 6px 0; }
+.evidence { font-size: 0.86rem; }
+.checklist li { font-size: 0.95rem; }
+.role { padding: 16px; }
+.role .rnum { font-size: 0.78rem; }
+.role p { font-size: 0.9rem; }
+.role .handoff { font-size: 0.8rem; }
+.timeline .step { font-size: 0.85rem; }
+.mini-label { font-size: 0.82rem; }
+.mini-total { font-size: 1.3rem; }
+.mini-status { font-size: 0.9rem; }
+.state-box { font-size: 1.05rem; }
+.state-note { font-size: 0.85rem; max-width: 420px; }
+.ace-note { font-size: 0.9rem; }
+.shoe-labels { font-size: 0.8rem; }
+.count-tag { font-size: 0.85rem; }
+.stat .label { font-size: 0.82rem; }
+.stat .big { font-size: clamp(1.45rem, 2.1vw, 2.05rem); }
+.stat .sub { font-size: 0.84rem; }
+.stat-row.four .big { font-size: 1.6rem; }
+.pcard { width: 78px; height: 110px; font-size: 1.2rem; }
+.pcard.small { width: 56px; height: 80px; font-size: 0.9rem; }
+.hand-row { min-height: 110px; }
+.hand-row.small { min-height: 80px; }
+.hero-cards { width: 300px; height: 250px; }
+.hero-cards .pcard { width: 112px; height: 158px; font-size: 1.35rem; }
+.hero-cards .c1 { transform: rotate(-16deg) translate(8px, 28px); }
+.hero-cards .c2 { transform: rotate(-4deg) translate(58px, 6px); }
+.hero-cards .c3 { transform: rotate(10deg) translate(106px, 30px); }
+.hero-cards .c4 { transform: rotate(24deg) translate(152px, 58px); }
+#topbar { top: 14px; }
+#sectionLabel { font-size: 0.82rem; }
+#presenterLabel { font-size: 0.92rem; color: var(--ink); font-weight: 700; letter-spacing: 0.02em; }
+#timer { font-size: 0.85rem; padding: 4px 11px; }
+#bottombar button { font-size: 0.84rem; padding: 6px 10px; }
+#counter { font-size: 0.8rem; min-width: 58px; }
+#notesPanel p { font-size: 1rem; }
+#notesPanel h4 { font-size: 0.85rem; }
+#overview h3 { font-size: 1.6rem; }
+.ov-card { padding: 12px; }
+.ov-card .num { font-size: 0.74rem; }
+.ov-card .ttl { font-size: 0.92rem; }
+.ov-card .who { font-size: 0.8rem; color: #67e8f9; margin-top: 4px; }
+.hm-grid { font-size: 0.8rem; }
+.hm-cell { font-size: 0.78rem; }
+#riskCaption { font-size: 0.95rem; }
+#help .panel p { font-size: 1rem; }
+
+@media (max-height: 800px) {
+  .slide-inner { gap: 1.2vh; }
+  h1 { font-size: clamp(2.6rem, 5vw, 4.3rem); }
+  h2 { font-size: clamp(1.8rem, 3.2vw, 2.95rem); }
+  p, li { font-size: clamp(0.95rem, 1.2vw, 1.2rem); }
+  .lede { font-size: clamp(1.1rem, 1.5vw, 1.5rem); }
+  .small { font-size: 0.86rem; }
+  .code { font-size: 0.8rem; line-height: 1.4; max-height: 36vh; }
+  .panel { padding: 16px; }
+  .qcard { min-height: 150px; padding: 16px; }
+  .qcard strong { font-size: 1.15rem; }
+  .qcard span { font-size: 0.92rem; }
+  .answer-strip { font-size: 1rem; min-height: 54px; padding: 12px 16px; }
+  .stat .big { font-size: 1.45rem; }
+  .stat-row.four .big { font-size: 1.35rem; }
+  .pcard { width: 64px; height: 90px; }
+  .pcard.small { width: 46px; height: 66px; }
+  .hand-row { min-height: 90px; }
+  .hand-row.small { min-height: 66px; }
+  .strategy-grid { grid-auto-rows: minmax(18px, auto); }
+  .terminal { font-size: 0.78rem; line-height: 1.5; }
+}
+
+/* Presenter label and editable notes */
+.brand { display: flex; flex-direction: column; gap: 1px; }
+#notesPanel { max-height: 52vh; padding: 16px 24px 20px; }
+.notes-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.notes-head h4 { margin: 0; }
+#notesSync { font-size: 0.78rem; color: #94a3b8; }
+#notesSync.ok { color: #86efac; }
+#notesSync.err { color: #fca5a5; }
+#notesView p { margin: 0 0 8px; }
+#notesPanel .notes-edit-wrap { display: flex; flex-direction: column; gap: 8px; }
+#notesPanel .notes-edit-wrap[hidden] { display: none; }
+#notesEditor {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  background: #0b1424;
+  color: #f8fafc;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: 1rem/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+#notesEditor:focus { outline: 2px solid #22d3ee; outline-offset: 1px; }
+.notes-meter { display: flex; justify-content: space-between; gap: 12px; font-size: 0.8rem; color: #94a3b8; }
+#notesError { color: #fca5a5; font-weight: 700; }
+.notes-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.notes-actions-read { margin-top: 4px; }
+#notesPanel .btn { border-color: #475569; color: #f8fafc; }
+#notesPanel .btn.primary { background: #22d3ee; color: #04121f; border-color: transparent; }
+#notesPanel .btn.ghost { background: transparent; }
+@media (max-width: 700px) {
+  #notesPanel { max-height: 66vh; padding: 12px 14px 16px; }
+  .notes-head { align-items: flex-start; flex-direction: column; gap: 2px; }
+}
+[hidden] { display: none !important; }
+.role-grid.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1200px) { .role-grid.five { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) { .role-grid.five { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px) { .role-grid.five { grid-template-columns: 1fr; } }
+@media (max-width: 1350px) { .role-grid.five { grid-template-columns: repeat(3, 1fr); } }
+.role p { font-size: clamp(0.95rem, 1.1vw, 1.05rem); line-height: 1.4; }
+.role .handoff { font-size: 0.88rem; line-height: 1.35; }
+.role .rnum { font-size: 0.82rem; }
+.role h3 { font-size: clamp(1.15rem, 1.45vw, 1.55rem); }
+#presenterLabel { font-size: 1rem; }
+#notesPanel .notes-head,
+#notesPanel #notesView,
+#notesPanel .notes-edit-wrap,
+#notesPanel .notes-actions { max-width: 1200px; margin-left: auto; margin-right: auto; }
+@media (max-width: 700px) { .role-grid.five { grid-template-columns: 1fr; } }
+.bots-layout { grid-template-columns: 0.78fr 1.22fr; }
+@media (max-width: 900px) { .bots-layout { grid-template-columns: 1fr; } }
+.state-note { font-size: 1rem; max-width: 480px; }
+.mini-label { font-size: 0.95rem; }
+.split-hand .meta { font-size: 0.9rem; }
+.split-hand .result { font-size: 0.95rem; }
+.payout-result .box .k { font-size: 0.9rem; }
+.checklist li { font-size: 1.05rem; }
+.bot-card .rule { font-size: 0.95rem; }
+.bot-card .tag { font-size: 0.8rem; }
+.ov-card .ttl { font-size: 1rem; }
+.ov-card .who { font-size: 0.9rem; }
+.split-hand .meta { font-size: 1rem; }
+.split-hand .result { font-size: 1rem; }
+.mini-status { font-size: 1rem; }
+body.light .sg-cell.hit { background: #fecdd3; }
+body.light .sg-cell.stand { background: #bbf7d0; }
+body.light .sg-cell.double { background: #a5f3fc; }
+body.light .sg-cell.split { background: #fde68a; }
+body.light .sg-cell.surrender { background: #ddd6fe; }
+body.light .sg-cell { color: #0f172a; }
+
 </style>
 </head>
 <body>
 <div class="aurora" aria-hidden="true"></div>
 <div id="progress"><div id="progressBar"></div></div>
 <div id="topbar">
-  <div id="sectionLabel"></div>
+  <div class="brand">
+    <span id="sectionLabel"></span>
+    <span id="presenterLabel"></span>
+  </div>
   <div id="timer" title="Click or press T to pause">15:00 left</div>
 </div>
 <main id="deck">
@@ -662,9 +853,9 @@ body.light::after { opacity: 0.18; }
     <h1>Blackjack<span class="accent">.</span><br>From a deck of cards to a Monte Carlo lab.</h1>
     <p class="lede">A playable table, a strategy engine, a card counter, and 513 tests that keep the math honest.</p>
     <div class="title-meta">
+      <span>Daksh · Julia · Ziah · Clark · Victoria</span>
       <span>Use ← → or Space</span>
       <span>Every demo is live</span>
-      <span>Press ? for controls</span>
     </div>
     <div class="hero-cards" aria-hidden="true">
       <div class="pcard c1"><span>A</span><span class="suit">♠</span></div>
@@ -704,8 +895,9 @@ body.light::after { opacity: 0.18; }
     <div class="btn-row"><button class="btn small ghost" id="revealAll">Reveal all three</button></div>
   </div>
   <aside class="notes">
-    <p>Three questions frame the whole project. First, what is the house edge, really? Everyone knows the casino wins, but by how much, and why? Second, does card counting still work, or is that a movie trick? Third, which betting system survives?</p>
-    <p>We built the engine so we could answer these with numbers instead of opinions. Click a card to see the short answer. The rest of the talk is the evidence.</p>
+    <p>Flashcard 1. What is the house edge, really? The flat game gives the casino about four tenths of one percent. Small enough to feel fair, large enough to pay the house.</p>
+    <p>Flashcard 2. Does card counting still work? Yes, with a bet spread. The count moves the bet, and the player edge flips positive.</p>
+    <p>Flashcard 3. Which betting system survives? Not the martingale. It wins short sessions, then the table limit or the bankroll ends it.</p>
   </aside>
 </section>
 
@@ -1358,7 +1550,7 @@ def true_count(self, decks_remaining: float) -> float:
   <div class="slide-inner">
     <div class="kicker">17 · Tier 3 · Bots</div>
     <h2>Four betting systems walk into a casino.</h2>
-    <div class="grid-2">
+    <div class="grid-2 bots-layout">
       <div class="bot-grid">
         <div class="bot-card"><div class="name">Flat bettor</div><div class="rule">Always one unit. The control group.</div><div class="tag green">Low variance</div></div>
         <div class="bot-card"><div class="name">Martingale</div><div class="rule">Double after a loss, reset after a win.</div><div class="tag red">Ruin risk</div></div>
@@ -1419,47 +1611,53 @@ def true_count(self, decks_remaining: float) -> float:
   </div>
   <aside class="notes">
     <p>Checkpoint three was the advanced layer: the shoe, the counter, the bots, the leaderboard and the Monte Carlo checks. The numbers are on the left. On the right is the quality gate.</p>
-    <p>Five hundred ten tests pass. Black leaves twenty-five files unchanged. Flake8 has no findings. The notebook executes end to end. This is the part that turns a demo into something another data scientist could recreate.</p>
+    <p>Five hundred thirteen tests pass in the full suite, and the notebook's quick run is five hundred ten. Black leaves twenty-five files unchanged. Flake8 has no findings. The notebook executes end to end. This is the part that turns a demo into something another data scientist could recreate.</p>
   </aside>
 </section>
 
-<section class="slide" data-section="Teamwork" data-title="Four workstreams, one integration path">
+<section class="slide" data-section="Teamwork" data-title="Five people, one integration path">
   <div class="slide-inner">
     <div class="kicker">19 · Teamwork</div>
-    <h2>Four workstreams, one integration path.</h2>
-    <div class="role-grid">
+    <h2>Five people, one integration path.</h2>
+    <div class="role-grid five">
       <div class="role">
-        <div class="rnum">Stream 01</div>
-        <h3>Rules engine</h3>
-        <p>Cards, hands, dealer, settlement and the 513-test suite.</p>
-        <div class="handoff">Hands off: a stable engine and a deterministic test harness.</div>
+        <div class="rnum">Daksh · Lead</div>
+        <h3>Integration and flow</h3>
+        <p>Owns the end-to-end system, the state machine, the handoffs and the final demo.</p>
+        <div class="handoff">Strength: systems thinking; sees how the pieces fit.</div>
       </div>
       <div class="role">
-        <div class="rnum">Stream 02</div>
-        <h3>Strategy and analytics</h3>
-        <p>Basic strategy tables, fallbacks, house edge, streaks and drawdown.</p>
-        <div class="handoff">Hands off: a decision layer the simulation can call.</div>
+        <div class="rnum">Julia · Technical</div>
+        <h3>Strategy and numbers</h3>
+        <p>Basic strategy, Hi-Lo, Monte Carlo, risk charts and the numerical checks.</p>
+        <div class="handoff">Strength: fastest with the math and the numpy details.</div>
       </div>
       <div class="role">
-        <div class="rnum">Stream 03</div>
-        <h3>Simulation and bots</h3>
-        <p>Monte Carlo runs, betting systems, shared-shoe competition and the leaderboard.</p>
-        <div class="handoff">Hands off: per-hand arrays for the charts.</div>
+        <div class="rnum">Clark · Engine</div>
+        <h3>Rules and tests</h3>
+        <p>Cards, dealer, settlement, the test suite and the engine's edge cases.</p>
+        <div class="handoff">Strength: puts in the reps and learns the hard parts with AI.</div>
       </div>
       <div class="role">
-        <div class="rnum">Stream 04</div>
-        <h3>UI and communication</h3>
-        <p>Rich table, notebook, Plotly charts and this interactive deck.</p>
-        <div class="handoff">Hands off: a demo anyone can run.</div>
+        <div class="rnum">Victoria · Delivery</div>
+        <h3>Demo and speaking</h3>
+        <p>Table walkthrough, player actions, UI polish and the live narration.</p>
+        <div class="handoff">Strength: confident on the spot; keeps the room with her.</div>
+      </div>
+      <div class="role">
+        <div class="rnum">Ziah · Recall</div>
+        <h3>Flashcards and backup</h3>
+        <p>Key terms, question prompts, definitions and the cards she presents from.</p>
+        <div class="handoff">Strength: preparation and recall; makes the backup notes.</div>
       </div>
     </div>
     <div class="panel tight">
-      <p class="small">Every member can run the full app, the notebook and the test suite. The handoffs are real, not just labels.</p>
+      <p class="small">Every member can run the app and the notebook. The handoffs are real, not just labels.</p>
     </div>
   </div>
   <aside class="notes">
-    <p>We split the work into four streams. Rules engine and tests. Strategy and analytics. Simulation and bots. UI, notebook and deck. The handoffs matter more than the labels.</p>
-    <p>The engine had to be stable before the strategy layer could be trusted. The analytics had to be defined before the charts could be drawn. Every member can run the full app, the notebook and the test suite, so the handoffs are real. If your group wants names on screen, add them to the four cards before presenting.</p>
+    <p>We are five. Daksh owns integration and the flow of the whole system. Julia owns the strategy and the numbers. Clark owns the rules engine and the tests. Victoria owns the live demo and the delivery. Ziah owns the flashcards and the backup definitions.</p>
+    <p>The strengths are complementary. Daksh sees how the pieces fit, Julia goes deep on the math, Clark puts in the reps and learns the hard parts with AI, Victoria speaks with confidence, and Ziah prepares the cards that keep the room oriented. The handoffs are real.</p>
   </aside>
 </section>
 
@@ -1536,8 +1734,26 @@ python -m pytest -q
   <button id="helpBtn" title="Controls (?)">?</button>
 </div>
 <div id="notesPanel">
-  <h4>Speaker notes</h4>
-  <div id="notesContent"></div>
+  <div class="notes-head">
+    <h4>Speaker notes</h4>
+    <span id="notesSync">Loading notes…</span>
+  </div>
+  <div id="notesView"></div>
+  <div class="notes-edit-wrap" id="notesEditWrap" hidden>
+    <textarea id="notesEditor" maxlength="1000" rows="5" spellcheck="true" aria-label="Speaker notes editor"></textarea>
+    <div class="notes-meter">
+      <span id="notesCount">0 / 1000 characters · 0 / 200 words</span>
+      <span id="notesError"></span>
+    </div>
+    <div class="notes-actions">
+      <button class="btn small primary" id="notesSave">Save</button>
+      <button class="btn small ghost" id="notesCancel">Done</button>
+    </div>
+  </div>
+  <div class="notes-actions notes-actions-read" id="notesReadActions">
+    <button class="btn small" id="notesEdit">Edit notes</button>
+    <span class="small">N to close</span>
+  </div>
 </div>
 <div id="overview">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -1552,7 +1768,7 @@ python -m pytest -q
     <p style="margin:10px 0; line-height:1.9;">
       <span class="kbd">←</span> <span class="kbd">→</span> or <span class="kbd">Space</span> move between slides<br>
       <span class="kbd">O</span> overview of every slide<br>
-      <span class="kbd">N</span> speaker notes for the current slide<br>
+      <span class="kbd">N</span> speaker notes, editable and saved to the server<br>
       <span class="kbd">T</span> start or pause the timer<br>
       <span class="kbd">F</span> fullscreen<br>
       <span class="kbd">L</span> light or dark theme<br>
@@ -1650,13 +1866,46 @@ function dealCard() {
 /* Slide navigation                                                    */
 /* ------------------------------------------------------------------ */
 const slides = $$(".slide");
+const PRESENTERS = {
+  1: "Daksh",
+  2: "Ziah",
+  3: "Victoria",
+  4: "Victoria",
+  5: "Clark",
+  6: "Clark",
+  7: "Clark",
+  8: "Clark",
+  9: "Julia",
+  10: "Julia",
+  11: "Julia",
+  12: "Julia",
+  13: "Daksh",
+  14: "Clark",
+  15: "Julia",
+  16: "Julia",
+  17: "Julia",
+  18: "Daksh",
+  19: "Clark",
+  20: "Daksh",
+  21: "Daksh",
+  22: "All five",
+};
 let current = -1;
 let overviewOpen = false;
 let notesOpen = false;
+const NOTES_MAX_CHARS = 1000;
+const NOTES_MAX_WORDS = 200;
+let notesDefaults = [];
+let notesOverrides = {};
+let notesReady = false;
+let notesEditing = false;
+let notesSaveTimer = null;
+let notesSaving = false;
 
 function show(index, updateHash = true) {
   if (!slides.length) return;
   const next = Math.max(0, Math.min(slides.length - 1, index));
+  if (notesEditing && next !== current && !commitCurrentNote()) return;
   slides.forEach((slide, i) => {
     slide.classList.toggle("active", i === next);
     slide.classList.toggle("prev", i < next);
@@ -1668,6 +1917,8 @@ function show(index, updateHash = true) {
   if (bar) bar.style.width = `${((next + 1) / slides.length) * 100}%`;
   const label = $("#sectionLabel");
   if (label) label.textContent = "Blackjack · PROG1301";
+  const presenter = $("#presenterLabel");
+  if (presenter) presenter.textContent = `Presented by ${PRESENTERS[next + 1] || "Daksh"}`;
   renderNotes();
   animateCounters(slides[next]);
   if (updateHash) {
@@ -1676,11 +1927,171 @@ function show(index, updateHash = true) {
 }
 function nextSlide() { show(current + 1); }
 function prevSlide() { show(current - 1); }
+function initNotes() {
+  notesDefaults = slides.map((slide) => {
+    const note = slide.querySelector(".notes");
+    if (!note) return "";
+    return Array.from(note.querySelectorAll("p"))
+      .map((p) => p.textContent.trim())
+      .filter(Boolean)
+      .join("\n\n");
+  });
+}
+
+function noteStats(text) {
+  const chars = text.length;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  return { chars, words };
+}
+function noteProblem(text) {
+  const { chars, words } = noteStats(text);
+  if (chars > NOTES_MAX_CHARS) return `Too long: ${chars} / ${NOTES_MAX_CHARS} characters`;
+  if (words > NOTES_MAX_WORDS) return `Too many words: ${words} / ${NOTES_MAX_WORDS}`;
+  return "";
+}
+function getNote(index) {
+  return notesOverrides[String(index + 1)] ?? notesDefaults[index] ?? "";
+}
+function setNotesSync(message, kind = "") {
+  const node = $("#notesSync");
+  if (!node) return;
+  node.textContent = message;
+  node.className = kind;
+}
+function updateNotesMeter() {
+  const editor = $("#notesEditor");
+  const count = $("#notesCount");
+  const error = $("#notesError");
+  const save = $("#notesSave");
+  if (!editor) return;
+  const { chars, words } = noteStats(editor.value);
+  if (count) count.textContent = `${chars} / ${NOTES_MAX_CHARS} characters · ${words} / ${NOTES_MAX_WORDS} words`;
+  const problem = noteProblem(editor.value);
+  if (error) error.textContent = problem;
+  if (save) save.disabled = Boolean(problem);
+  return !problem;
+}
 function renderNotes() {
-  const panel = $("#notesContent");
-  if (!panel || current < 0) return;
-  const note = slides[current].querySelector(".notes");
-  panel.innerHTML = note ? note.innerHTML : "<p>No notes for this slide.</p>";
+  if (current < 0) return;
+  const text = getNote(current);
+  const view = $("#notesView");
+  const editor = $("#notesEditor");
+  if (view && !notesEditing) {
+    view.innerHTML = text
+      ? text.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`).join("")
+      : "<p>No notes for this slide.</p>";
+  }
+  if (editor && !notesEditing) editor.value = text;
+  updateNotesMeter();
+  const edit = $("#notesEdit");
+  if (edit) edit.disabled = !notesReady;
+}
+function setNotesEditing(on) {
+  if (on && !notesReady) {
+    toast("Notes server unavailable. Open the served deck to edit.");
+    return;
+  }
+  notesEditing = Boolean(on);
+  const view = $("#notesView");
+  const wrap = $("#notesEditWrap");
+  const read = $("#notesReadActions");
+  if (view) view.hidden = notesEditing;
+  if (wrap) wrap.hidden = !notesEditing;
+  if (read) read.hidden = notesEditing;
+  if (notesEditing) {
+    const editor = $("#notesEditor");
+    if (editor) {
+      editor.value = getNote(current);
+      updateNotesMeter();
+      editor.focus();
+    }
+    setNotesSync("Editing · autosave on", "");
+  } else {
+    const editor = $("#notesEditor");
+    if (editor && document.activeElement === editor) editor.blur();
+    renderNotes();
+  }
+}
+async function persistNote(index, text) {
+  if (!notesReady) return false;
+  notesSaving = true;
+  setNotesSync("Saving…", "");
+  try {
+    const response = await fetch(`/api/notes/${index + 1}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.error || `HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    notesOverrides[String(index + 1)] = data.text ?? text;
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    setNotesSync(`Saved ${time}`, "ok");
+    notesSaving = false;
+    return true;
+  } catch (error) {
+    setNotesSync("Save failed — retry", "err");
+    notesSaving = false;
+    return false;
+  }
+}
+function commitCurrentNote() {
+  if (!notesEditing) return true;
+  clearTimeout(notesSaveTimer);
+  const editor = $("#notesEditor");
+  if (!editor) return true;
+  const text = editor.value.trim();
+  if (noteProblem(text)) {
+    updateNotesMeter();
+    setNotesSync("Not saved — fix the limit", "err");
+    return false;
+  }
+  const index = current;
+  notesOverrides[String(index + 1)] = text;
+  setNotesEditing(false);
+  persistNote(index, text);
+  return true;
+}
+function cancelNotesEdit() {
+  notesEditing = false;
+  setNotesEditing(false);
+  renderNotes();
+}
+async function loadNotes() {
+  setNotesSync("Loading notes…", "");
+  try {
+    const response = await fetch("/api/notes", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    notesOverrides = data && typeof data.notes === "object" && data.notes ? data.notes : {};
+    notesReady = true;
+    setNotesSync("Saved on server", "ok");
+  } catch (error) {
+    notesReady = false;
+    setNotesSync("Read-only · notes server unavailable", "err");
+  }
+  const edit = $("#notesEdit");
+  if (edit) edit.disabled = !notesReady;
+  if (notesOpen) renderNotes();
+}
+async function refreshNotes() {
+  if (!notesReady || notesEditing || notesSaving) return;
+  try {
+    const response = await fetch("/api/notes", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    const next = data && data.notes && typeof data.notes === "object" ? data.notes : {};
+    if (JSON.stringify(next) !== JSON.stringify(notesOverrides)) {
+      notesOverrides = next;
+      if (notesOpen) renderNotes();
+      setNotesSync("Updated from server", "ok");
+    }
+  } catch (error) {
+    /* keep the last known notes */
+  }
 }
 function buildOverview() {
   const grid = $("#overviewGrid");
@@ -1689,7 +2100,7 @@ function buildOverview() {
   slides.forEach((slide, i) => {
     const button = document.createElement("button");
     button.className = "ov-card";
-    button.innerHTML = `<div class="num">${String(i + 1).padStart(2, "0")}</div><div class="ttl">${esc(slide.dataset.title || slide.querySelector("h1,h2")?.textContent || "Slide")}</div>`;
+    button.innerHTML = `<div class="num">${String(i + 1).padStart(2, "0")}</div><div class="ttl">${esc(slide.dataset.title || slide.querySelector("h1,h2")?.textContent || "Slide")}</div><div class="who">${esc(PRESENTERS[i + 1] || "Daksh")}</div>`;
     button.addEventListener("click", () => {
       show(i);
       toggleOverview(false);
@@ -1704,8 +2115,11 @@ function toggleOverview(force) {
 }
 function toggleNotes(force) {
   const node = $("#notesPanel");
-  notesOpen = force === undefined ? !notesOpen : force;
+  const open = force === undefined ? !notesOpen : force;
+  if (!open && notesEditing && !commitCurrentNote()) return;
+  notesOpen = open;
   node.classList.toggle("open", notesOpen);
+  if (notesOpen) renderNotes();
 }
 function toggleHelp(force) {
   const node = $("#help");
@@ -1998,9 +2412,9 @@ function barChart(host, items, options = {}) {
   if (!host) return;
   clear(host);
   const W = 900;
-  const rowH = options.rowH || 46;
-  const H = Math.max(160, items.length * rowH + 50);
-  const pad = { l: 190, r: 90, t: 12, b: 24 };
+  const rowH = options.rowH || 56;
+  const H = Math.max(180, items.length * rowH + 50);
+  const pad = { l: 220, r: 100, t: 12, b: 24 };
   const values = items.map((item) => item.value);
   const min = Math.min(0, ...values);
   const max = Math.max(1, ...values);
@@ -2021,9 +2435,9 @@ function barChart(host, items, options = {}) {
       opacity: 0.9,
     });
     root.appendChild(rect);
-    root.appendChild(textNode(12, y + rowH / 2 + 4, item.label, { fill: ink, "font-size": 13, "font-weight": 700 }));
+    root.appendChild(textNode(12, y + rowH / 2 + 4, item.label, { fill: ink, "font-size": 17, "font-weight": 700 }));
     root.appendChild(textNode(W - 10, y + rowH / 2 + 4, options.valueFormat ? options.valueFormat(item.value) : money(item.value), {
-      fill: muted, "font-size": 12, "text-anchor": "end",
+      fill: muted, "font-size": 15, "text-anchor": "end",
     }));
     const title = svg("title", {});
     title.textContent = `${item.label}: ${options.valueFormat ? options.valueFormat(item.value) : money(item.value)}`;
@@ -2997,6 +3411,7 @@ function init() {
   initRisk();
   initLeaderboard();
   buildOverview();
+  initNotes();
   bindKeys();
   const hash = (location.hash || "").match(/slide-(\d+)/);
   show(hash ? Number(hash[1]) - 1 : 0, false);
@@ -3004,6 +3419,39 @@ function init() {
   renderTimer();
   $("#timer").addEventListener("click", toggleTimer);
   $("#notesBtn").addEventListener("click", () => toggleNotes());
+  $("#notesEdit").addEventListener("click", () => setNotesEditing(true));
+  $("#notesSave").addEventListener("click", () => commitCurrentNote());
+  $("#notesCancel").addEventListener("click", cancelNotesEdit);
+  $("#notesEditor").addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      if (commitCurrentNote()) toggleNotes(false);
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      commitCurrentNote();
+    }
+  });
+  $("#notesEditor").addEventListener("input", () => {
+    if (!notesEditing) return;
+    const valid = updateNotesMeter();
+    clearTimeout(notesSaveTimer);
+    if (!valid) {
+      setNotesSync("Not saved — fix the limit", "err");
+      return;
+    }
+    const index = current;
+    notesSaveTimer = setTimeout(() => {
+      if (!notesEditing) return;
+      const text = $("#notesEditor").value.trim();
+      if (noteProblem(text)) return;
+      notesOverrides[String(index + 1)] = text;
+      persistNote(index, text);
+    }, 900);
+  });
+  loadNotes();
+  setInterval(refreshNotes, 15000);
   $("#overviewBtn").addEventListener("click", () => toggleOverview());
   $("#themeBtn").addEventListener("click", () => {
     document.body.classList.toggle("light");

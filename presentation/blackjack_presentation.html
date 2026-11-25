@@ -845,7 +845,7 @@ p, li { color: var(--ink); }
     <span id="sectionLabel"></span>
     <span id="presenterLabel"></span>
   </div>
-  <div id="timer" title="Click or press T to pause">15:00 left</div>
+  <div id="timer" title="9-minute target. Hard stop at 10:00. Click or press T to pause.">9:00 target</div>
 </div>
 <main id="deck">
 <section class="slide title-slide" data-section="Opening" data-title="Blackjack: from a deck of cards to a Monte Carlo lab">
@@ -866,8 +866,7 @@ p, li { color: var(--ink); }
     </div>
   </div>
   <aside class="notes">
-    <p>Good morning. Our project is a blackjack simulator that starts as a playable game and grows into a simulation lab. The question we kept asking was simple: can a card game be a serious programming project? The answer is yes, if you treat the rules as an engine and the game as a set of experiments.</p>
-    <p>I will show you the engine, the tests, the strategy chart, the counting system and the Monte Carlo results. The deck is interactive, so click the demos when they appear. We have about fifteen minutes.</p>
+    <p>Good morning. We built a blackjack engine, a strategy layer, a card counter and a simulation lab. The question was whether a card game could be a serious programming project. We treated the rules as a state machine and the game as a set of experiments. The same engine powers the CLI, the notebook and the tests. I will show the flow, the design choices, the numbers and the evidence.</p>
   </aside>
 </section>
 
@@ -896,66 +895,26 @@ p, li { color: var(--ink); }
     <div class="btn-row"><button class="btn small ghost" id="revealAll">Reveal all three</button></div>
   </div>
   <aside class="notes">
-    <p>Flashcard 1. What is the house edge, really? The flat game gives the casino about four tenths of one percent. Small enough to feel fair, large enough to pay the house.</p>
-    <p>Flashcard 2. Does card counting still work? Yes, with a bet spread. The count moves the bet, and the player edge flips positive.</p>
-    <p>Flashcard 3. Which betting system survives? Not the martingale. It wins short sessions, then the table limit or the bankroll ends it.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Rules" data-title="Blackjack in sixty seconds">
-  <div class="slide-inner">
-    <div class="kicker">02 · The game</div>
-    <h2>Blackjack in sixty seconds.</h2>
-    <div class="grid-2">
-      <div class="grid-2" style="grid-template-columns:1fr 1fr;">
-        <div class="panel tight"><h3>21 wins</h3><p class="small">Get closer to 21 than the dealer without going over.</p></div>
-        <div class="panel tight"><h3>Aces are 1 or 11</h3><p class="small">The hand picks whichever value does not bust.</p></div>
-        <div class="panel tight"><h3>Dealer to 17</h3><p class="small">Hits below 17. Stands on soft 17.</p></div>
-        <div class="panel tight"><h3>Blackjack pays 3:2</h3><p class="small">A win pays 1:1. A natural pays 1.5x.</p></div>
-      </div>
-      <div class="panel mini-table" id="miniTable">
-        <div class="mini-row">
-          <span class="mini-label">Dealer</span>
-          <div class="hand-row small" id="miniDealer"></div>
-          <span class="mini-total" id="miniDealerTotal">?</span>
-        </div>
-        <div class="mini-row">
-          <span class="mini-label">You</span>
-          <div class="hand-row small" id="miniPlayer"></div>
-          <span class="mini-total" id="miniPlayerTotal">—</span>
-        </div>
-        <div class="mini-status" id="miniStatus">Deal a hand.</div>
-        <div class="btn-row">
-          <button class="btn primary" id="miniDeal">Deal</button>
-          <button class="btn" id="miniHit">Hit</button>
-          <button class="btn" id="miniStand">Stand</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>Blackjack is simple to explain. Get closer to 21 than the dealer without going over. Aces are one or eleven. The dealer hits until 17 and stands on soft 17. A blackjack pays 3:2.</p>
-    <p>Click Deal. The demo shows the player and the dealer, with the hole card hidden. Hit adds a card, Stand reveals the dealer and plays it out. This is the same information the engine sees.</p>
+    <p>Three questions frame the talk. What is the house edge, really? Does card counting still work? Which betting system survives? The short answers are about four tenths of one percent to the house, yes with a bet spread, and not the martingale. Every one of those answers comes from the same engine. Click a card and the rest of the talk is the evidence.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Application flow" data-title="Every hand follows the same seven steps">
   <div class="slide-inner">
-    <div class="kicker">03 · The flow</div>
+    <div class="kicker">02 · The flow</div>
     <h2>Every hand follows the same seven steps.</h2>
     <div class="flow" id="flow"></div>
     <div class="panel flow-detail" id="flowDetail"></div>
     <p class="small">Click a step. The function name is what you would find in <span class="mono">engine.py</span>.</p>
   </div>
   <aside class="notes">
-    <p>Every hand follows the same seven steps. The bet is validated and deducted. The shoe deals. The engine offers insurance and checks for naturals. The player acts. The dealer plays only if a hand is still live. Settlement pays each hand. The result is recorded for analytics.</p>
-    <p>Click any step to see the function that owns it. The UI never decides a rule. It asks the engine for the legal actions and then calls act.</p>
+    <p>Every hand follows seven steps. Validate and deduct the bet. Deal from the shoe. Offer insurance and check naturals. Ask the player for an action. Run the dealer policy only if a hand is live. Settle each hand. Write one HandResult. The UI never decides a rule. It asks the engine for available_actions and calls act. That separation is why the CLI, the notebook and the tests behave the same, and why analytics only has to read the ledger.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Architecture" data-title="Three front doors, one engine">
   <div class="slide-inner">
-    <div class="kicker">04 · Architecture</div>
+    <div class="kicker">03 · Architecture</div>
     <h2>Three front doors. One engine.</h2>
     <div class="arch">
       <div class="arch-row">
@@ -981,61 +940,13 @@ p, li { color: var(--ink); }
     <div class="panel arch-detail" id="archDetail"></div>
   </div>
   <aside class="notes">
-    <p>The repo has three front doors. The CLI, the notebook and the tests. All three point at the same BlackjackGame. Under it are the modules: cards, hands, rules, strategy, counting, analytics, bots, simulation and charts.</p>
-    <p>Click any module to see its job. This is why the notebook can demo the project without duplicating it, and why a bug fixed in the engine is fixed everywhere.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Data model" data-title="The hardest rule is the ace">
-  <div class="slide-inner">
-    <div class="kicker">05 · Data model</div>
-    <h2>The hardest rule in the game is the ace.</h2>
-    <div class="grid-2">
-      <div class="codewalk" data-steps='[
-        {"lines":[1,2,3,4],"text":"Start by counting every ace as one. This total can never bust, so it is a safe floor."},
-        {"lines":[5,6],"text":"If there is an ace and ten more points still fit, use one ace as eleven. That is the soft total."},
-        {"lines":[7,8],"text":"Return the best total. The property recomputes after every card, so a soft hand can become hard."},
-        {"lines":[10,11,12],"text":"A hand is soft when the best total is higher than the all-aces-are-one total."}
-      ]'>
-        <pre class="code" data-lang="python">
-@property
-def total(self) -> int:
-    total = sum(card.base_value for card in self.cards)
-    if any(card.is_ace for card in self.cards) and total + 10 <= 21:
-        return total + 10
-    return total
-
-@property
-def is_soft(self) -> bool:
-    return self.total != self.hard_total
-        </pre>
-        <div class="code-ui">
-          <button class="btn small next">Next line</button>
-          <div class="explain"></div>
-        </div>
-      </div>
-      <div class="panel">
-        <h3>Ace builder</h3>
-        <div class="hand-row small" id="aceHand"></div>
-        <div class="ace-stats">
-          <div class="stat"><div class="label">Total</div><div class="big" id="aceTotal">—</div></div>
-          <div class="stat"><div class="label">Type</div><div class="big" id="aceSoft">Add a card</div></div>
-        </div>
-        <div class="ace-note" id="aceNote"></div>
-        <div class="btn-row" id="aceButtons"></div>
-        <div class="btn-row" style="margin-top:8px"><button class="btn small ghost" id="aceReset">Reset</button></div>
-      </div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>The ace is the hardest rule in the game. Every ace starts as one. Then the hand checks whether one ace can be eleven without busting. If it can, add ten. That is why ace-six is a soft seventeen, and ace-six-ten is a hard seventeen.</p>
-    <p>Click the card buttons on the right to build a hand. Watch the soft flag change. The code on the left is the whole rule.</p>
+    <p>Three front doors, one engine. The CLI, the notebook and the tests all call BlackjackGame. Under it are cards, hands, rules, strategy, counting, analytics, bots, simulation and charts. We chose one shared engine over copying logic into each front door. A fix lands once, and a test at the engine boundary protects every surface. The trade-off is a stricter API, but that is the point.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Engine" data-title="The engine is a small state machine">
   <div class="slide-inner">
-    <div class="kicker">06 · Engine</div>
+    <div class="kicker">04 · Engine</div>
     <h2>The engine is a small state machine.</h2>
     <div class="grid-2">
       <div class="state-map panel">
@@ -1085,65 +996,13 @@ def act(self, action: str) -> None:
     </div>
   </div>
   <aside class="notes">
-    <p>The engine is a small state machine. IDLE, INSURANCE, PLAYER, SETTLED. A hand can only start from IDLE or SETTLED. Player actions are only accepted in PLAYER.</p>
-    <p>The code first checks the legal action list, then mutates only the current hand, then advances to the next unfinished hand. That guard is why the CLI cannot ask for an illegal move. Click Next line to walk through it.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Dealer" data-title="The dealer is a policy, not a personality">
-  <div class="slide-inner">
-    <div class="kicker">07 · Dealer</div>
-    <h2>The dealer is a policy, not a personality.</h2>
-    <div class="grid-2">
-      <div class="panel" id="dealerDemo">
-        <div class="dealer-top">
-          <div class="toggle"><button id="dealerS17" class="on">S17</button><button id="dealerH17">H17</button></div>
-          <span class="chip">Dealer policy</span>
-        </div>
-        <div class="hand-row" id="dealerCards"></div>
-        <div class="stat-row" style="margin:8px 0;">
-          <div class="stat"><div class="label">Total</div><div class="big" id="dealerTotal">17 soft</div></div>
-          <div class="stat"><div class="label">Decision</div><div class="big" id="dealerDecision">Stand</div></div>
-        </div>
-        <div class="dealer-log" id="dealerLog"></div>
-        <div class="btn-row">
-          <button class="btn primary" id="dealerDeal">Deal a card</button>
-          <button class="btn" id="dealerAuto">Auto play</button>
-          <button class="btn ghost" id="dealerReset">Reset</button>
-        </div>
-      </div>
-      <div class="codewalk" data-steps='[
-        {"lines":[1,2,3],"text":"The dealer keeps drawing while the total is below 17."},
-        {"lines":[4,5,6,7,8],"text":"On 17, the soft flag matters. S17 stands. H17 draws."},
-        {"lines":[9,10],"text":"Anything else stands. That is the whole dealer."}
-      ]'>
-        <pre class="code" data-lang="python">
-def _dealer_play(self) -> None:
-    while True:
-        total = self.dealer.total
-        if total < 17:
-            self.dealer.add(self._draw())
-        elif total == 17 and self.dealer.is_soft and self.rules.dealer_hits_soft_17:
-            self.dealer.add(self._draw())
-        else:
-            return
-        </pre>
-        <div class="code-ui">
-          <button class="btn small next">Next line</button>
-          <div class="explain"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>The dealer is a policy, not a personality. Draw below seventeen. Stand on soft seventeen. If the H17 rule is on, hit soft seventeen.</p>
-    <p>The demo starts with ace-six. In S17 the dealer stands. Toggle H17 and deal a card, and the dealer hits. This is deterministic, which is exactly what makes it testable. The tests stack the shoe with exact cards and check both rules.</p>
+    <p>The engine is a state machine: IDLE, INSURANCE, PLAYER, SETTLED. Only PLAYER accepts actions. The first check is state. The second is available_actions. If the action is not legal, it raises. Hit mutates only the current hand. Bust or 21 closes it, then _advance moves to the next split hand. We chose explicit states over loose flags because illegal transitions are the main bug class. The tests assert the transition, not just the final score. That is why the UI cannot ask for a double after a hit.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Money" data-title="Every payout is a formula">
   <div class="slide-inner">
-    <div class="kicker">08 · Money</div>
+    <div class="kicker">05 · Money</div>
     <h2>Every payout is a formula, not a feeling.</h2>
     <div class="grid-2">
       <div class="panel" id="payoutCalc">
@@ -1190,65 +1049,13 @@ elif hand.total == dealer_total:
     </div>
   </div>
   <aside class="notes">
-    <p>Every payout is a formula. A win returns the stake plus the same amount. A blackjack returns the stake plus one and a half times the stake. A push returns the stake. A loss returns nothing. A surrender returns half. Insurance is a separate half-unit bet that pays two to one.</p>
-    <p>Move the slider and click an outcome. The key accounting rule is that total_wagered includes doubles, splits and insurance, so house edge is net divided by all money at risk.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Advanced actions" data-title="A split is two hands with two wallets">
-  <div class="slide-inner">
-    <div class="kicker">09 · Advanced actions</div>
-    <h2>A split is two hands with two wallets.</h2>
-    <div class="grid-2">
-      <div class="panel" id="splitDemo">
-        <div class="split-hands">
-          <div class="split-hand" id="splitHand1"></div>
-          <div class="split-hand" id="splitHand2"></div>
-        </div>
-        <div class="small" id="splitNote" style="margin:10px 0; min-height:38px;"></div>
-        <div class="btn-row">
-          <button class="btn primary" id="splitNext">Next step</button>
-          <button class="btn ghost" id="splitReset">Reset</button>
-          <span class="chip" id="splitStep">1 / 6</span>
-        </div>
-      </div>
-      <div class="codewalk" data-steps='[
-        {"lines":[1,2,3],"text":"Remove the second card and make a new Hand. It carries its own bet and split flag."},
-        {"lines":[5,6,7,8],"text":"Post a second bet, deal one card to each hand, and insert the new hand after the current one."},
-        {"lines":[10,11],"text":"Split aces get one card and stand. Everything else advances normally."}
-      ]'>
-        <pre class="code" data-lang="python">
-def _split(self, hand: Hand) -> None:
-    second = hand.cards.pop()
-    new_hand = Hand(cards=[second], bet=hand.bet, is_split_hand=True)
-    hand.is_split_hand = True
-
-    self.bankroll -= hand.bet
-    hand.add(self._draw())
-    new_hand.add(self._draw())
-    self.hands.insert(self.current + 1, new_hand)
-
-    if hand.cards[0].is_ace and not self.rules.hit_split_aces:
-        hand.stood = True
-        new_hand.stood = True
-    self._advance()
-        </pre>
-        <div class="code-ui">
-          <button class="btn small next">Next line</button>
-          <div class="explain"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>A split is two hands with two wallets. The second card becomes a new hand, and a second bet is posted. Each hand has its own cards, bet, doubled flag and result.</p>
-    <p>The demo walks through a split of eights. Hand one doubles to twenty-one, hand two stands on ten. The dealer busts. Both win, but the payouts are independent. There is a test that makes one hand win and the other lose, and checks the bankroll nets to zero.</p>
+    <p>Every payout is a formula. A win returns the stake plus one. A blackjack returns the stake plus one and a half. A push returns the stake. A loss returns nothing. Surrender returns half. Insurance is a separate half-unit bet that pays two to one. The important line is total_wagered. It includes doubles, splits and insurance, because house edge is net divided by all money at risk. Get the denominator wrong and the business number lies.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Strategy" data-title="The basic strategy chart is the app's brain">
   <div class="slide-inner">
-    <div class="kicker">10 · Strategy</div>
+    <div class="kicker">06 · Strategy</div>
     <h2>The basic strategy chart is the app's brain.</h2>
     <div class="grid-2 strategy-layout">
       <div class="panel">
@@ -1302,154 +1109,13 @@ if code == "D":
     </div>
   </div>
   <aside class="notes">
-    <p>The basic strategy chart is the app's brain. Three tables: hard totals, soft totals and pairs. Each row has ten entries, one for dealer two through ace.</p>
-    <p>Pick any two cards and a dealer upcard. The badge shows the optimal action and the grid highlights the cell. If doubling is not allowed, the chart falls back to hit, except soft eighteen, which falls back to stand. That detail is where most simple implementations get it wrong.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Verification" data-title="We tested the chart against an independent chart">
-  <div class="slide-inner">
-    <div class="kicker">11 · Verification</div>
-    <h2>We tested the chart against a second, independent chart.</h2>
-    <div class="grid-2">
-      <div class="panel">
-        <div class="big-stat">376<span> / 376</span></div>
-        <p class="small">Hard totals, soft totals, pairs, and every fallback path.</p>
-        <div class="mosaic" id="testMosaic"></div>
-        <div class="stat-row four">
-          <div class="stat"><div class="label">Hard</div><div class="big">170</div><div class="sub">cases</div></div>
-          <div class="stat"><div class="label">Soft</div><div class="big">90</div><div class="sub">cases</div></div>
-          <div class="stat"><div class="label">Pairs</div><div class="big">100</div><div class="sub">cases</div></div>
-          <div class="stat"><div class="label">Fallbacks</div><div class="big">16</div><div class="sub">cases</div></div>
-        </div>
-      </div>
-      <div class="panel code-compare">
-        <div class="small">The table</div>
-        <pre class="code" data-lang="python" style="margin-top:6px;">
-11: "DDDDDDDDDD"
-16: "SSSSSHHHHH"
-        </pre>
-        <div class="small" style="margin:12px 0 4px;">The independent reference</div>
-        <pre class="code" data-lang="python">
-if total == 11:
-    return "double" if can_double else "hit"
-if total == 16 and dealer in ("9", "10", "A"):
-    return "surrender"
-        </pre>
-        <p class="small" style="margin-top:10px;">The test does not import the table. It re-derives the chart from rules. A typo in a row disagrees with the reference and fails.</p>
-      </div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>We did not test the chart against itself. The test file has a second, independent implementation written as rules. Then it checks every hard total, every soft total, every pair and every fallback against every dealer card. That is 376 cases.</p>
-    <p>The mosaic is all green because the table and the rules agree. If someone changes a row by mistake, the reference disagrees and the test fails.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Checkpoints 1 and 2" data-title="Rules first, then decisions">
-  <div class="slide-inner">
-    <div class="kicker">12 · Checkpoints 1 and 2</div>
-    <h2>Rules first. Then decisions.</h2>
-    <div class="grid-2">
-      <div class="panel tier">
-        <div class="tier-head"><span class="weight">40%</span><h3>Tier 1 · Basic</h3></div>
-        <ul>
-          <li>Dealing, flexible aces, hit and stand.</li>
-          <li>Dealer S17, automatic settlement and 3:2 blackjack.</li>
-          <li>Bankroll, bet validation and a playable table.</li>
-          <li>pytest invariants and a soft-17 sanity check.</li>
-        </ul>
-        <div class="evidence">80 Tier 1 tests · chip ledger invariant · S17 and H17 cases</div>
-      </div>
-      <div class="panel tier">
-        <div class="tier-head"><span class="weight">20%</span><h3>Tier 2 · Intermediate</h3></div>
-        <ul>
-          <li>Double, split, re-split, surrender, insurance.</li>
-          <li>Full hard, soft and pair strategy chart.</li>
-          <li>House edge, streaks, drawdown and adherence.</li>
-          <li>Split state isolation and payout tracking.</li>
-        </ul>
-        <div class="evidence">376 strategy cases · split payout tests · analytics suite</div>
-      </div>
-    </div>
-    <div class="timeline">
-      <div class="step">Rules engine</div>
-      <div class="step">Actions and payouts</div>
-      <div class="step">Strategy chart</div>
-      <div class="step">Analytics</div>
-      <div class="step">Notebook and visuals</div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>Checkpoint one was the core game: dealing, aces, hit and stand, dealer S17, payouts and a bankroll UI. Checkpoint two was the advanced layer: double, split, re-split, surrender, insurance, the strategy chart and session analytics.</p>
-    <p>The evidence is on the cards. Eighty Tier 1 tests, 376 strategy cases, and split payout tests that prove independent state. The timeline at the bottom is the order we built it.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Tier 3 · Shoe" data-title="A real shoe has a memory">
-  <div class="slide-inner">
-    <div class="kicker">13 · Tier 3 · Shoe</div>
-    <h2>A real shoe has a memory.</h2>
-    <div class="grid-2">
-      <div class="panel" id="shoeDemo">
-        <div class="btn-row" style="justify-content:space-between;">
-          <label class="small">Decks
-            <select id="shoeDecksSel">
-              <option>1</option><option>2</option><option selected>6</option><option>8</option>
-            </select>
-          </label>
-          <label class="small">Cut card <input id="shoePen" type="range" min="50" max="90" value="75"><b id="shoePenLabel">75%</b></label>
-        </div>
-        <div class="shoe-track">
-          <div class="shoe-fill" id="shoeBar"></div>
-          <div class="shoe-cutmark" id="shoeCut"></div>
-        </div>
-        <div class="shoe-labels"><span>remaining shoe</span><span>discard tray</span></div>
-        <div class="stat-row two" style="margin-top:10px;">
-          <div class="stat"><div class="label">Cards left</div><div class="big" id="shoeRemaining">312</div></div>
-          <div class="stat"><div class="label">Decks left</div><div class="big" id="shoeDecks">6.0</div></div>
-          <div class="stat"><div class="label">Discard</div><div class="big" id="shoeDiscard">0</div></div>
-          <div class="stat"><div class="label">Shuffles</div><div class="big" id="shoeShuffles">0</div></div>
-        </div>
-        <div class="hand-row small" id="shoeLast" style="margin-top:8px;"></div>
-        <div class="btn-row" style="margin-top:8px;">
-          <button class="btn primary" id="shoeDeal1">Deal 1</button>
-          <button class="btn" id="shoeDeal5">Deal 5</button>
-          <button class="btn ghost" id="shoeShuffle">Shuffle</button>
-          <span class="small" id="shoeStatus">Dealing.</span>
-        </div>
-      </div>
-      <div class="codewalk" data-steps='[
-        {"lines":[1,2,3],"text":"The cut card is a position, not a card. Once enough cards have been dealt, the shoe is finished."},
-        {"lines":[5,6,7,8,9],"text":"At the start of the next hand, the shoe checks the flag and shuffles. The discard tray is emptied."}
-      ]'>
-        <pre class="code" data-lang="python">
-@property
-def needs_shuffle(self) -> bool:
-    return len(self._dealt) >= self.cut_card_index or not self._cards
-
-def shuffle_if_needed(self) -> bool:
-    if self.needs_shuffle:
-        self.shuffle()
-        return True
-    return False
-        </pre>
-        <div class="code-ui">
-          <button class="btn small next">Next line</button>
-          <div class="explain"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>A real shoe has a memory. A multi-deck shoe, a cut card and a discard tray. Change the number of decks or the penetration. Deal cards and watch the shoe shrink. When the cut card is reached, the shoe must be shuffled.</p>
-    <p>The code is two properties. This matters for counting because penetration determines how many decks remain, and decks remaining is the denominator of the true count.</p>
+    <p>The strategy layer is three lookup tables: hard, soft and pairs. Pair first. Surrender before the total chart. Then hard or soft. The function returns an action and never mutates the game. We chose tables over a learned model because basic strategy is deterministic, auditable and fast. A model would be harder to explain and harder to test. The chart has 376 cases, and the engine still validates every action the strategy suggests.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Tier 3 · Counting" data-title="Counting is arithmetic with a memory">
   <div class="slide-inner">
-    <div class="kicker">14 · Tier 3 · Counting</div>
+    <div class="kicker">07 · Counting</div>
     <h2>Counting is just arithmetic with a memory.</h2>
     <div class="grid-2">
       <div class="panel" id="countDemo">
@@ -1495,14 +1161,13 @@ def true_count(self, decks_remaining: float) -> float:
     </div>
   </div>
   <aside class="notes">
-    <p>Counting is arithmetic with a memory. Two through six are plus one. Seven through nine are zero. Ten through ace are minus one. The running count is the sum. The true count divides by the decks left.</p>
-    <p>Click Deal a card and watch both numbers move. The suggested bet scales with the true count. Hide the count and quiz the room, then reveal it. This is the same counter the simulation uses.</p>
+    <p>The shoe is multi-deck, with a cut card and a discard tray. The Hi-Lo count adds one for low cards, zero for middle cards, minus one for high cards. The running count becomes a true count by dividing by decks remaining. The bet spread uses that true count. The shoe owns the draw and the discard. The counter only observes visible cards. That separation makes the count reproducible in tests, and it is why the simulation can replay the same shoe.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Tier 3 · Monte Carlo" data-title="One hundred thousand hands make the noise visible">
   <div class="slide-inner">
-    <div class="kicker">15 · Tier 3 · Monte Carlo</div>
+    <div class="kicker">08 · Monte Carlo</div>
     <h2>One hundred thousand hands make the noise visible.</h2>
     <div class="panel chart-panel">
       <div class="range-row">
@@ -1524,59 +1189,13 @@ def true_count(self, decks_remaining: float) -> float:
     </div>
   </div>
   <aside class="notes">
-    <p>One hundred thousand hands make the noise visible. The blue line is flat basic strategy. The green line is the Hi-Lo spread on the same shoes. The dashed line is the theoretical EV at a half percent.</p>
-    <p>The flat run lands at about point one two percent, the counting run at minus point five one, which is a player edge. The range slider zooms the window. Replay draws the curves from left to right. This is the experiment the whole project was built for.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Visualisations" data-title="Three ways to see risk">
-  <div class="slide-inner">
-    <div class="kicker">16 · Visualisations</div>
-    <h2>Three ways to see risk.</h2>
-    <div class="tabs" id="riskTabs">
-      <button class="tab on" data-tab="outcomes">Outcomes</button>
-      <button class="tab" data-tab="drawdown">Drawdown</button>
-      <button class="tab" data-tab="heatmap">Risk heatmap</button>
-    </div>
-    <div class="panel" id="riskPanel"></div>
-    <div class="small" id="riskCaption"></div>
-  </div>
-  <aside class="notes">
-    <p>Three ways to see risk. Outcomes shows the shape of a session: most hands lose, blackjacks and doubles pay for it. Drawdown shows the worst underwater point, which is what a player actually feels. The heatmap shows player EV by starting total and dealer upcard.</p>
-    <p>Red is a house edge, green is a player edge. Hover any cell to see the sample size. The point is that a positive edge is not a smooth line.</p>
-  </aside>
-</section>
-
-<section class="slide" data-section="Tier 3 · Bots" data-title="Four betting systems walk into a casino">
-  <div class="slide-inner">
-    <div class="kicker">17 · Tier 3 · Bots</div>
-    <h2>Four betting systems walk into a casino.</h2>
-    <div class="grid-2 bots-layout">
-      <div class="bot-grid">
-        <div class="bot-card"><div class="name">Flat bettor</div><div class="rule">Always one unit. The control group.</div><div class="tag green">Low variance</div></div>
-        <div class="bot-card"><div class="name">Martingale</div><div class="rule">Double after a loss, reset after a win.</div><div class="tag red">Ruin risk</div></div>
-        <div class="bot-card"><div class="name">Hi-Lo spread</div><div class="rule">Bet one unit below a true count of one, scale to eight.</div><div class="tag green">Count edge</div></div>
-        <div class="bot-card"><div class="name">Half Kelly</div><div class="rule">Bet a fraction of the bankroll from edge and variance.</div><div class="tag amber">Aggressive</div></div>
-      </div>
-      <div class="panel">
-        <div class="tabs" id="lbTabs">
-          <button class="tab on" data-metric="final">Final bankroll</button>
-          <button class="tab" data-metric="edge">Edge</button>
-        </div>
-        <div id="leaderboardChart" style="margin-top:6px;"></div>
-        <div class="small">One 1,000-round session. Short samples are noisy. Across 300,000-hand runs, flat paid the house 0.35%; the count spread returned 0.48% to the player.</div>
-      </div>
-    </div>
-  </div>
-  <aside class="notes">
-    <p>Four betting systems. Flat always bets one unit. Martingale doubles after a loss and resets after a win. Hi-Lo spread sizes the bet from the true count. Half Kelly sizes from an estimated edge and variance.</p>
-    <p>The chart is one thousand rounds. The martingale can win a short session, which is exactly why short sessions are dangerous. Across 300,000-hand runs, the flat game paid the house about point three five percent; the Hi-Lo spread returned about point four eight percent to the player.</p>
+    <p>One hundred thousand hands make the noise visible. The blue line is flat basic strategy. The green line is the Hi-Lo spread on the same shoes. Flat lands around plus zero point one two percent house edge. Hi-Lo lands around minus zero point five one, a player edge. Across three hundred thousand hands the pooled edge is minus zero point four eight. The standard error is about zero point two, so short samples lie. That is why the martingale can look good for a session and still lose long run.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Tier 3 · Quality gate" data-title="Advanced goals, checked at the gate">
   <div class="slide-inner">
-    <div class="kicker">18 · Checkpoint 3 and quality</div>
+    <div class="kicker">09 · Quality gate</div>
     <h2>Advanced goals, checked at the gate.</h2>
     <div class="grid-2">
       <div class="panel tier">
@@ -1611,14 +1230,13 @@ def true_count(self, decks_remaining: float) -> float:
     </div>
   </div>
   <aside class="notes">
-    <p>Checkpoint three was the advanced layer: the shoe, the counter, the bots, the leaderboard and the Monte Carlo checks. The numbers are on the left. On the right is the quality gate.</p>
-    <p>Five hundred thirteen tests pass in the full suite, and the notebook's quick run is five hundred ten. Black leaves twenty-five files unchanged. Flake8 has no findings. The notebook executes end to end. This is the part that turns a demo into something another data scientist could recreate.</p>
+    <p>Five hundred thirteen tests pass. Three hundred seventy six strategy cases match an independent reference. The chip ledger is invariant across every hand. Split state is isolated. Black and flake8 are clean, and the notebook executes end to end. We test at the engine boundary, not through the UI. The shoes are seeded, so failures reproduce. That is the difference between a demo and something another data scientist can rebuild.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Teamwork" data-title="Five people, one integration path">
   <div class="slide-inner">
-    <div class="kicker">19 · Teamwork</div>
+    <div class="kicker">10 · Teamwork</div>
     <h2>Five people, one integration path.</h2>
     <div class="role-grid five">
       <div class="role">
@@ -1657,14 +1275,13 @@ def true_count(self, decks_remaining: float) -> float:
     </div>
   </div>
   <aside class="notes">
-    <p>We are five. Daksh owns integration and the flow of the whole system. Julia owns the strategy and the numbers. Clark owns the rules engine and the tests. Victoria owns the live demo and the delivery. Ziah owns the flashcards and the backup definitions.</p>
-    <p>The strengths are complementary. Daksh sees how the pieces fit, Julia goes deep on the math, Clark puts in the reps and learns the hard parts with AI, Victoria speaks with confidence, and Ziah prepares the cards that keep the room oriented. The handoffs are real.</p>
+    <p>Five people, one integration path. I own the flow and the final demo. Julia owns the numbers and the strategy. Clark owns the engine and the tests. Victoria owns the live walkthrough. Ziah owns the flashcards and the definitions. The handoffs are real. Every one of us can run the app and the notebook.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Limits and next" data-title="What we would build next">
   <div class="slide-inner">
-    <div class="kicker">20 · Limits and next</div>
+    <div class="kicker">11 · Limits and next</div>
     <h2>What we would build next.</h2>
     <div class="grid-2">
       <div class="panel">
@@ -1687,18 +1304,17 @@ def true_count(self, decks_remaining: float) -> float:
       </div>
     </div>
     <div class="panel tight">
-      <p class="small">What surprised us: variance is large enough that a 1,000-round leaderboard can crown the martingale. The long run is the only honest judge.</p>
+      <p class="small">What surprised us: variance is large enough that a short session can crown the martingale. The long run is the only honest judge.</p>
     </div>
   </div>
   <aside class="notes">
-    <p>What we did not build. No full index plays beyond insurance. No side bets. The competition is a shared shoe with bots taking turns, not a true simultaneous multi-seat table. What we would build next: count deviations, a multi-seat table, a web UI.</p>
-    <p>The surprise is variance. A one-thousand-round leaderboard can crown the martingale. The long run is the only honest judge.</p>
+    <p>What we did not build is part of the design. No full index play beyond insurance. No side bets. No multi-seat table. No browser game. Each one would add state or a new money path. If we extended it, we would add count deviations first, then a multi-seat table. We kept the scope tight so the core engine could stay correct.</p>
   </aside>
 </section>
 
 <section class="slide" data-section="Q&amp;A" data-title="Questions">
   <div class="slide-inner">
-    <div class="kicker">21 · Q&amp;A</div>
+    <div class="kicker">12 · Q&A</div>
     <h2>Questions?</h2>
     <div class="qa-grid">
       <div class="panel">
@@ -1718,15 +1334,15 @@ python -m pytest -q
     </div>
   </div>
   <aside class="notes">
-    <p>Questions? The repo is linked here. The commands on the left are the live demo. If you want the short version: the engine owns the rules, the hand owns its cards and bet, the strategy table turns a hand and an upcard into an action, the counter turns cards into a true count, the simulator turns hands into arrays, and the charts turn arrays into pictures. Every layer is testable on its own.</p>
-    <p>Likely questions. Why 0.35 and not 0.5? Sample noise, the rule set includes late surrender, and the standard error on 300,000 hands is about 0.2 percent. How do splits not bleed? Each split hand is its own object with its own bet and flags. How is the chart verified? Against an independent rule-based reference, 376 cases. Hardest bug? A settlement guard returned early when the state was still SETTLED from the previous round, so later naturals were skipped. The fix sets the state to PLAYER at the start of every round, with a regression test.</p>
+    <p>Questions. We can go deep on any layer: the state machine, the payout ledger, the strategy table, the count or the simulation. If you ask about AI, we used it as a tool for drafts and review, but we own the chain of thought. We can trace why each state exists, why the ledger is shaped this way, and why we chose tables over a model.</p>
+    <p>Likely questions. Why zero point three five versus zero point five? Sample noise, the rule set and late surrender. How do splits not bleed? Each hand has its own bet and flags. Hardest bug? A settlement guard returned early after a previous round, so we reset state at the start of every round.</p>
   </aside>
 </section>
 
 </main>
 <div id="bottombar">
   <button id="prev" title="Previous slide">←</button>
-  <span id="counter">1 / 22</span>
+  <span id="counter">1 / 13</span>
   <button id="next" title="Next slide">→</button>
   <button id="overviewBtn" title="Slide overview (O)">Overview</button>
   <button id="notesBtn" title="Speaker notes (N)">Notes</button>
@@ -1770,7 +1386,7 @@ python -m pytest -q
       <span class="kbd">←</span> <span class="kbd">→</span> or <span class="kbd">Space</span> move between slides<br>
       <span class="kbd">O</span> overview of every slide<br>
       <span class="kbd">N</span> speaker notes, editable and saved to the server<br>
-      <span class="kbd">T</span> start or pause the timer<br>
+      <span class="kbd">T</span> start or pause the 9-minute target timer<br>
       <span class="kbd">F</span> fullscreen<br>
       <span class="kbd">L</span> light or dark theme<br>
       <span class="kbd">?</span> this panel
@@ -1871,25 +1487,16 @@ const PRESENTERS = {
   1: "Daksh",
   2: "Ziah",
   3: "Victoria",
-  4: "Victoria",
+  4: "Daksh",
   5: "Clark",
-  6: "Clark",
-  7: "Clark",
-  8: "Clark",
+  6: "Julia",
+  7: "Julia",
+  8: "Julia",
   9: "Julia",
-  10: "Julia",
-  11: "Julia",
-  12: "Julia",
-  13: "Daksh",
-  14: "Clark",
-  15: "Julia",
-  16: "Julia",
-  17: "Julia",
-  18: "Daksh",
-  19: "Clark",
-  20: "Daksh",
-  21: "Daksh",
-  22: "All five",
+  10: "Clark",
+  11: "Daksh",
+  12: "Daksh",
+  13: "All five",
 };
 let current = -1;
 let overviewOpen = false;
@@ -2139,7 +1746,7 @@ function toast(message) {
 /* ------------------------------------------------------------------ */
 /* Timer                                                               */
 /* ------------------------------------------------------------------ */
-const TIMER_TARGET = 15 * 60;
+const TIMER_TARGET = 9 * 60;
 let elapsed = 0;
 let timerRunning = false;
 let timerStarted = false;
@@ -2152,12 +1759,19 @@ function tick() {
 function renderTimer() {
   const node = $("#timer");
   if (!node) return;
-  const remaining = Math.max(0, TIMER_TARGET - elapsed);
-  const minutes = Math.floor(remaining / 60);
-  const seconds = remaining % 60;
-  node.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} left`;
-  node.classList.toggle("warn", remaining <= 300 && remaining > 120);
-  node.classList.toggle("danger", remaining <= 120);
+  const remaining = TIMER_TARGET - elapsed;
+  if (remaining > 0) {
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    node.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} target`;
+  } else {
+    const over = elapsed - TIMER_TARGET;
+    const minutes = Math.floor(over / 60);
+    const seconds = over % 60;
+    node.textContent = `BUFFER ${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+  node.classList.toggle("warn", remaining <= 120 && remaining > 30);
+  node.classList.toggle("danger", remaining <= 30 || remaining < 0);
 }
 function startTimerOnce() {
   if (!timerStarted) {

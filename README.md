@@ -18,7 +18,7 @@ All five members listed below are part of the project and the submission. The ro
 
 **Shared work.** Every member can run the app and the notebook, reviewed the deck, and contributed to the final integration. The table is the primary division, not a fence around contributions.
 
-Slide 13 is the group Q&A, hosted by all five.
+Slide 13 is the group Q&A, hosted by all five. Slides 14 to 16 are reference-only Q&A and are not part of the presented run.
 
 **Artifacts by area.**
 
@@ -28,7 +28,7 @@ Slide 13 is the group Q&A, hosted by all five.
 - Victoria: `blackjack/cli.py` table flow, demo script, `presentation/` narration, UI checks and team introduction.
 - Ziah: glossary, definitions, Q&A prompts, payout definitions, `presentation/` backup notes.
 
-The 13-slide deck is `presentation/blackjack_presentation.html`. The previous 22-slide build remains in commit history, and the notebook still demonstrates the material that was cut from the talk.
+The 13-slide presented deck is `presentation/blackjack_presentation.html`, with three reference-only Q&A slides (14 to 16) at the end. The previous 22-slide build remains in commit history, and the notebook still demonstrates the material that was cut from the talk.
 
 ## Quick start
 
@@ -66,7 +66,7 @@ jupyter notebook notebooks/Prog_Project.ipynb
 
 ## Presentation
 
-`presentation/blackjack_presentation.html` is a single self-contained 13-slide deck with live demos, speaker notes, a timer and keyboard controls. Open it directly in a browser, or serve the folder with `python3 presentation/serve.py --port 8088 --root presentation --state /tmp/blackjack-notes` to enable the editable shared notes. See `presentation/README.md` for the controls, notes API and data builder.
+`presentation/blackjack_presentation.html` is a single self-contained 13-slide deck with live demos, speaker notes, a timer and keyboard controls. Three reference-only Q&A slides sit at the end: they are visible in normal windowed mode and disappear in fullscreen. Open it directly in a browser, or serve the folder with `python3 presentation/serve.py --port 8088 --root presentation --state /tmp/blackjack-notes` to enable the editable shared notes. See `presentation/README.md` for the controls, notes API and data builder.
 
 ## Rules implemented
 

@@ -835,6 +835,97 @@ body.light .sg-cell.surrender { background: #ddd6fe; }
 body.light .sg-cell { color: #0f172a; }
 p, li { color: var(--ink); }
 
+/* Reference-only backup slides. They are removed from the deck in fullscreen. */
+.slide.backup .slide-inner {
+  width: min(1420px, 100%);
+  gap: 1.25vh;
+}
+body.presentation-mode .slide.backup {
+  display: none !important;
+}
+.backup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(9px, 1.2vw, 16px);
+  align-items: stretch;
+}
+.backup-big {
+  font-size: clamp(3.2rem, 6.2vw, 5.4rem);
+  line-height: 0.86;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+}
+.backup-callout {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: clamp(0.65rem, 0.78vw, 0.8rem);
+  line-height: 1.4;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.035);
+}
+body.light .backup-callout { background: #f8fafc; }
+.backup-grid .panel h3,
+.qa h3 {
+  margin: 0 0 4px;
+  font-size: clamp(0.78rem, 0.96vw, 0.98rem);
+  line-height: 1.25;
+  color: var(--ink);
+}
+.qa {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  min-height: 0;
+}
+body.light .qa { background: #f8fafc; }
+.qa p {
+  font-size: clamp(0.64rem, 0.76vw, 0.79rem);
+  line-height: 1.38;
+  color: var(--muted);
+}
+.backup-strip {
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 7px 11px;
+  font-size: clamp(0.63rem, 0.76vw, 0.8rem);
+  line-height: 1.4;
+  color: var(--ink);
+  background: rgba(34, 211, 238, 0.075);
+}
+body.light .backup-strip { background: #ecfeff; }
+.test-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.61rem, 0.72vw, 0.76rem);
+  line-height: 1.32;
+  color: var(--muted);
+}
+.test-table td {
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.test-table tr:last-child td { border-bottom: none; }
+.test-table .num {
+  color: var(--accent);
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+  width: 38px;
+}
+.test-table b { color: var(--ink); }
+.ov-card.backup {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+@media (max-width: 900px) {
+  .backup-grid { grid-template-columns: 1fr; }
+  .slide.backup .slide-inner { gap: 1vh; }
+}
+
 </style>
 </head>
 <body>
@@ -1339,6 +1430,75 @@ python -m pytest -q
   </aside>
 </section>
 
+<section class="slide backup" data-section="Backup · Tests" data-title="Backup: the 513 tests" data-backup="true">
+  <div class="slide-inner">
+    <div class="kicker">BACKUP · NOT PRESENTED</div>
+    <h2>513 is a test map, not a score.</h2>
+    <div class="backup-grid" style="grid-template-columns: 0.72fr 1.28fr;">
+      <div class="panel tight">
+        <div style="display:flex; align-items:baseline; gap:10px;">
+          <div class="backup-big">513</div>
+          <div class="small">collected pytest cases</div>
+        </div>
+        <p class="small" style="margin-top:8px;">125 test functions expand through parametrization. 3 are marked slow. The rest run in seconds.</p>
+        <div class="backup-callout" style="margin-top:10px;">
+          <b>376 =</b> 170 hard cells + 90 soft cells + 100 pair cells + 8 fallback combinations + 8 edge cases.
+        </div>
+        <p class="small" style="margin-top:9px;"><span class="mono">python -m pytest -q</span><br><span class="mono">pytest -q -m "not slow"</span><br><span class="mono">pytest --collect-only -q</span></p>
+      </div>
+      <div class="panel tight">
+        <table class="test-table">
+          <tr><td class="num">376</td><td><b>Strategy</b> — 360 grid cells against an independent rule chart, 8 availability fallbacks, 8 edge cases.</td></tr>
+          <tr><td class="num">38</td><td><b>Cards</b> — ranks, suits, deck composition, cut card, shuffle, stacked shoes.</td></tr>
+          <tr><td class="num">30</td><td><b>Engine</b> — deal, S17/H17 dealer, settlement, insurance, double, bankroll ledger invariant.</td></tr>
+          <tr><td class="num">18</td><td><b>Simulation</b> — array shapes, seed reproducibility, bot sizing, convergence, insurance policy.</td></tr>
+          <tr><td class="num">14</td><td><b>Splits</b> — independent hands and wallets, split aces, resplit, DAS, no state bleed.</td></tr>
+          <tr><td class="num">12</td><td><b>Hand</b> — soft/hard aces, pairs, bust, 21, hand totals.</td></tr>
+          <tr><td class="num">9</td><td><b>Counting</b> — Hi-Lo tags, running/true count, reset, remaining estimate.</td></tr>
+          <tr><td class="num">8</td><td><b>CLI</b> — prompts, flags, demo/report paths.</td></tr>
+          <tr><td class="num">8</td><td><b>Analytics</b> — edge, streaks, drawdown, combine.</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="backup-strip"><b>The one-sentence answer:</b> “513 is not 513 separate features. It is a parameterized strategy grid plus behavioral tests. The number proves the implementation agrees with an independent chart and that money, state and simulation invariants hold. It does not prove mathematical optimality, and we do not claim that.”</div>
+  </div>
+  <aside class="notes"><p>Reference only. This slide is outside the 13-slide run and hidden in fullscreen.</p></aside>
+</section>
+
+<section class="slide backup" data-section="Backup · Statistics" data-title="Backup: statistics and randomness" data-backup="true">
+  <div class="slide-inner">
+    <div class="kicker">BACKUP · STATISTICS</div>
+    <h2>What a physicist will ask.</h2>
+    <div class="backup-grid">
+      <div class="qa"><h3>What exactly is the house edge?</h3><p>It is <span class="mono">-Σ net / Σ wagered</span> over settled hands. <span class="mono">net</span> is after doubles, splits and insurance. <span class="mono">wagered</span> is every dollar put at risk, including those extra bets. Win rate is not the edge. The 300k run: 308,277 hands and $3.4M wagered, edge 0.3467%.</p></div>
+      <div class="qa"><h3>Why did the 100k edge move to 0.12%?</h3><p>That is sampling noise. A 100k flat run has a standard error near 0.31 percentage points. The 300k run has SE 0.181 points and a 95% interval of plus or minus 0.355. 0.12% and 0.347% are the same process seen through different sample sizes.</p></div>
+      <div class="qa"><h3>Why is Hi-Lo -0.51% but the pool -0.48%?</h3><p>Edge is dollar-weighted, not an average of percentages. Flat betting wagers more total dollars. Hi-Lo concentrates larger bets at high true counts, so its own line can be player-positive while the combined pool is still house-positive. The pool is dominated by the flat line's volume.</p></div>
+      <div class="qa"><h3>How many hands are enough?</h3><p>SE scales as <span class="mono">1/√N</span>. About 0.31 points at 100k, 0.18 at 300k and 0.10 at 1M. To resolve a 0.1-point difference you need millions. The 513 tests are code correctness, not statistical power.</p></div>
+      <div class="qa"><h3>Is the RNG trustworthy?</h3><p>Python's <span class="mono">random.Random</span> is MT19937 with a uniform shuffle and an explicit seed. The same seed gives the same shoe. It is not cryptographic and not for security. We test composition and reproducibility. For very large studies I would use NumPy PCG64 and run several independent seeds.</p></div>
+      <div class="qa"><h3>What does the 300k test assert?</h3><p><span class="mono">test_house_edge_converges_to_theoretical</span> asserts the flat edge lands between 0.15% and 0.85%. That is a broad guard around the published range, not a 0.01-point proof. It catches a broken engine or a wrong payout. Tighter claims need more hands or a confidence interval.</p></div>
+    </div>
+    <div class="backup-strip"><b>Concrete 300k run:</b> 308,277 hands · mean bet $11.05 · edge 0.3467% · per-hand SD $11.10 · SE 0.181 pp · 95% CI ±0.355 pp. This is why the deck says 0.347, not exactly 0.35.</div>
+  </div>
+  <aside class="notes"><p>Reference only. This slide is outside the 13-slide run and hidden in fullscreen.</p></aside>
+</section>
+
+<section class="slide backup" data-section="Backup · Code" data-title="Backup: code and design questions" data-backup="true">
+  <div class="slide-inner">
+    <div class="kicker">BACKUP · CODE AND DESIGN</div>
+    <h2>What a programmer will ask.</h2>
+    <div class="backup-grid">
+      <div class="qa"><h3>Why a state machine instead of flags?</h3><p>Four states: IDLE, INSURANCE, PLAYER, SETTLED. <span class="mono">act()</span> checks the state, then <span class="mono">available_actions()</span>, then mutates. An illegal action raises before it touches a hand. Tests assert the raise. Flags would let a double after a hit or a settlement before the dealer plays slip through.</p></div>
+      <div class="qa"><h3>How do you prove split hands do not bleed?</h3><p>Each <span class="mono">Hand</span> owns its bet, cards, stood and surrendered flags, and split origin. <span class="mono">_settle()</span> writes one <span class="mono">HandResult</span> per hand. Tests cover independent wagers, one win and one loss, split aces, resplit and DAS. <span class="mono">total_wagered</span> includes both bets and any double.</p></div>
+      <div class="qa"><h3>Why floats for money?</h3><p>Every public money mutation is rounded to two decimals, and tests compare cents. It is not integer-cent accounting. For a teaching simulator that is enough. For production I would use integer cents or <span class="mono">Decimal</span>. That is the first thing I would change under audit.</p></div>
+      <div class="qa"><h3>What was the hardest bug?</h3><p>A stale settlement guard let a later round skip settlement. <span class="mono">start_hand()</span> now resets round state before dealing, and <span class="mono">test_blackjack_on_later_rounds_still_pays</span> locks it. The ledger invariant test runs 300 random hands and checks bankroll equals starting plus the sum of nets.</p></div>
+      <div class="qa"><h3>Why Python, and what breaks at scale?</h3><p>Python gives readable rules, Rich, Plotly and a notebook. The hot loop is object-heavy. 100k to 300k runs are fine, billions are not. At that scale I would vectorize the shoe and settlement, or move the inner loop to Cython, Rust or NumPy.</p></div>
+      <div class="qa"><h3>How did AI change the work?</h3><p>AI helped draft prose and review code. It did not own the design. We can trace why each state exists, why the ledger is shaped this way and why strategy is a table. If asked, open the code and the tests, not the chat.</p></div>
+    </div>
+    <div class="backup-strip"><b>“Show me” path:</b> <span class="mono">engine.py act()</span> for the state guard, <span class="mono">strategy.py</span> for the table lookup, <span class="mono">cards.py Shoe.stack()</span> for deterministic tests, <span class="mono">test_engine_basic.py</span> for the ledger invariant.</div>
+  </div>
+  <aside class="notes"><p>Reference only. This slide is outside the 13-slide run and hidden in fullscreen.</p></aside>
+</section>
+
 </main>
 <div id="bottombar">
   <button id="prev" title="Previous slide">←</button>
@@ -1482,7 +1642,8 @@ function dealCard() {
 /* ------------------------------------------------------------------ */
 /* Slide navigation                                                    */
 /* ------------------------------------------------------------------ */
-const slides = $$(".slide");
+const allSlides = $$(".slide");
+let slides = allSlides;
 const PRESENTERS = {
   1: "Daksh",
   2: "Ziah",
@@ -1497,6 +1658,9 @@ const PRESENTERS = {
   11: "Victoria",
   12: "Daksh",
   13: "All five",
+  14: "Backup",
+  15: "Backup",
+  16: "Backup",
 };
 let current = -1;
 let overviewOpen = false;
@@ -1514,6 +1678,7 @@ function show(index, updateHash = true) {
   if (!slides.length) return;
   const next = Math.max(0, Math.min(slides.length - 1, index));
   if (notesEditing && next !== current && !commitCurrentNote()) return;
+  allSlides.forEach((slide) => slide.classList.remove("active", "prev"));
   slides.forEach((slide, i) => {
     slide.classList.toggle("active", i === next);
     slide.classList.toggle("prev", i < next);
@@ -1526,7 +1691,8 @@ function show(index, updateHash = true) {
   const label = $("#sectionLabel");
   if (label) label.textContent = "Blackjack · PROG1301";
   const presenter = $("#presenterLabel");
-  if (presenter) presenter.textContent = `Presented by ${PRESENTERS[next + 1] || "Daksh"}`;
+  const presenterName = PRESENTERS[next + 1] || "Daksh";
+  if (presenter) presenter.textContent = presenterName === "Backup" ? "Backup · not presented" : `Presented by ${presenterName}`;
   renderNotes();
   animateCounters(slides[next]);
   if (updateHash) {
@@ -1536,7 +1702,7 @@ function show(index, updateHash = true) {
 function nextSlide() { show(current + 1); }
 function prevSlide() { show(current - 1); }
 function initNotes() {
-  notesDefaults = slides.map((slide) => {
+  notesDefaults = allSlides.map((slide) => {
     const note = slide.querySelector(".notes");
     if (!note) return "";
     return Array.from(note.querySelectorAll("p"))
@@ -1706,15 +1872,26 @@ function buildOverview() {
   if (!grid) return;
   clear(grid);
   slides.forEach((slide, i) => {
+    const domIndex = allSlides.indexOf(slide);
     const button = document.createElement("button");
     button.className = "ov-card";
-    button.innerHTML = `<div class="num">${String(i + 1).padStart(2, "0")}</div><div class="ttl">${esc(slide.dataset.title || slide.querySelector("h1,h2")?.textContent || "Slide")}</div><div class="who">${esc(PRESENTERS[i + 1] || "Daksh")}</div>`;
+    if (slide.dataset.backup === "true") button.classList.add("backup");
+    button.innerHTML = `<div class="num">${String(domIndex + 1).padStart(2, "0")}</div><div class="ttl">${esc(slide.dataset.title || slide.querySelector("h1,h2")?.textContent || "Slide")}</div><div class="who">${esc(PRESENTERS[domIndex + 1] || "Daksh")}</div>`;
     button.addEventListener("click", () => {
       show(i);
       toggleOverview(false);
     });
     grid.appendChild(button);
   });
+}
+function syncPresentationMode() {
+  const fullscreen = Boolean(document.fullscreenElement);
+  document.body.classList.toggle("presentation-mode", fullscreen);
+  if (fullscreen) toggleOverview(false);
+  slides = fullscreen ? allSlides.filter((slide) => slide.dataset.backup !== "true") : allSlides;
+  if (!slides.length) return;
+  show(Math.min(Math.max(current, 0), slides.length - 1), false);
+  buildOverview();
 }
 function toggleOverview(force) {
   const node = $("#overview");
@@ -3081,6 +3258,7 @@ function init() {
   $("#helpClose").addEventListener("click", () => toggleHelp(false));
   $("#overviewClose").addEventListener("click", () => toggleOverview(false));
 }
+document.addEventListener("fullscreenchange", syncPresentationMode);
 document.addEventListener("DOMContentLoaded", init);
 
 </script>

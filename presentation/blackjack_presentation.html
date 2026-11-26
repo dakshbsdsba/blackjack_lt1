@@ -1087,6 +1087,69 @@ body.light .backup-strip { background: #ecfeff; }
 .cli-ins-prompt[hidden] { display: none !important; }
 .cli-ins-prompt .btn { padding: 4px 9px; font-size: 0.7rem; }
 
+/* CLI Live Demo: terminal transcript */
+.cli-term {
+  background: #050b14;
+  border: 1px solid #23324a;
+  border-radius: 12px;
+  padding: 15px 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  font-family: var(--mono);
+  color: #e2e8f0;
+}
+.cli-command {
+  color: #67e8f9;
+  font-size: clamp(0.68rem, 0.82vw, 0.84rem);
+  padding-bottom: 9px;
+  border-bottom: 1px solid #23324a;
+  margin-bottom: 10px;
+}
+.cli-screen {
+  margin: 0;
+  color: #e2e8f0;
+  font-family: var(--mono);
+  font-size: clamp(0.62rem, 0.8vw, 0.82rem);
+  line-height: 1.45;
+  white-space: pre;
+  overflow-x: auto;
+}
+.cli-prompts { margin-top: 10px; }
+.cli-prompt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  color: #e2e8f0;
+  font-family: var(--mono);
+  font-size: clamp(0.64rem, 0.78vw, 0.84rem);
+  line-height: 1.5;
+}
+.cli-prompt[hidden] { display: none !important; }
+.cli-prompt input {
+  width: 52px;
+  padding: 1px 3px;
+  border: none;
+  border-bottom: 1px solid #67e8f9;
+  background: transparent;
+  color: #f8fafc;
+  font-family: var(--mono);
+  font-size: inherit;
+  outline: none;
+}
+.cli-key {
+  appearance: none;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  background: transparent;
+  color: #67e8f9;
+  padding: 1px 7px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.cli-key.primary { background: #22d3ee; border-color: #22d3ee; color: #04121f; }
+.cli-key:disabled { opacity: 0.35; cursor: default; }
+
 </style>
 </head>
 <body>
@@ -1408,55 +1471,30 @@ def true_count(self, decks_remaining: float) -> float:
   <div class="slide-inner">
     <div class="kicker">08 · CLI Live Demo</div>
     <h2>CLI Live Demo</h2>
-    <div class="cli-demo" id="cliDemo">
-      <div class="cli-titlebar">
-        <span class="cli-dots"><i></i><i></i><i></i></span>
-        <span class="mono">python -m blackjack --trainer --hint</span>
-        <span class="cli-live">LIVE</span>
-      </div>
-      <div class="cli-body">
-        <div class="cli-board">
-          <div class="cli-row">
-            <span class="cli-seat">Dealer</span>
-            <div class="hand-row small" id="cliDealerCards"></div>
-            <span class="cli-total" id="cliDealerTotal">?</span>
-          </div>
-          <div class="cli-row">
-            <span class="cli-seat">You</span>
-            <div class="hand-row small" id="cliPlayerCards"></div>
-            <span class="cli-total" id="cliPlayerTotal">17</span>
-          </div>
-          <div class="cli-row cli-bank">
-            <span class="cli-seat">Bank</span>
-            <span class="mono cli-bankroll" id="cliBankroll">$1,000.00</span>
-            <span class="cli-round" id="cliRound">—</span>
-          </div>
+    <div class="cli-term" id="cliDemo">
+      <div class="cli-command">$ python -m blackjack --trainer --hint</div>
+      <pre class="cli-screen" id="cliScreen"></pre>
+      <div class="cli-prompts">
+        <div class="cli-prompt" id="cliBetPrompt">
+          <span>Bet (bankroll <span id="cliPromptBank">$1,000.00</span>, limits $1-$10000) (25):</span>
+          <input id="cliBetInput" type="number" min="1" max="10000" step="5" value="25" aria-label="Bet">
+          <button class="cli-key primary" id="cliDeal">enter</button>
         </div>
-        <div class="cli-readout">
-          <div class="cli-line" id="cliCountLine">Count  R 0 · TC 0.00</div>
-          <div class="cli-line accent" id="cliSuggestLine">Suggest  1u · $25.00</div>
-          <div class="cli-line" id="cliBetLine">Bet  —</div>
-          <div class="cli-line warn" id="cliInsuranceLine">Insurance  n/a</div>
-          <div class="cli-ins-prompt" id="cliInsurancePrompt" hidden>
-            <span>Insurance?</span>
-            <button class="btn small" id="cliTakeIns">Take</button>
-            <button class="btn small primary" id="cliDeclineIns">Decline</button>
-          </div>
-          <div class="cli-line hint" id="cliHintLine">Hint  set a bet</div>
+        <div class="cli-prompt" id="cliInsPrompt" hidden>
+          <span>Dealer shows an Ace. Insurance for <span id="cliInsAmount">$12.50</span>? [y/n] <span id="cliInsDefault">(n)</span>:</span>
+          <button class="cli-key" id="cliTakeIns">y</button>
+          <button class="cli-key primary" id="cliDeclineIns">n</button>
         </div>
-        <div class="cli-actions">
-          <label class="cli-bet">Bet $<input id="cliBetInput" type="number" min="1" max="10000" step="5" value="25"></label>
-          <button class="btn small primary" id="cliDeal">Deal</button>
-          <button class="btn small" id="cliHit" disabled>Hit</button>
-          <button class="btn small" id="cliStand" disabled>Stand</button>
-          <button class="btn small ghost" id="cliReset">Reset</button>
-          <span class="cli-result" id="cliResult">Set a bet.</span>
+        <div class="cli-prompt" id="cliActionPrompt" hidden>
+          <span>Action [hit/stand] (strategy: <span id="cliStrategy">stand</span>):</span>
+          <button class="cli-key" id="cliHit">hit</button>
+          <button class="cli-key primary" id="cliStand">stand</button>
         </div>
       </div>
     </div>
   </div>
   <aside class="notes">
-    <p>Here is the CLI flow, mirrored in the deck so I can play it without leaving the browser. The command above is the real one. I set the bet and deal. The trainer row shows the count and the suggested unit size before the bet, then the insurance hint before the insurance prompt. The dealer shows an ace, but the true count is below plus three, so the prompt recommends decline. I decline, stand on seventeen, the dealer reveals five and draws two tens, busts, and the hand pays. Deal keeps the bankroll and count going, and the suggested bet scales from one to eight units as the count rises.</p>
+    <p>Here is the CLI itself, mirrored in the deck so I can play it without leaving the browser. The command above is the real one. I set the bet and deal. The trainer row shows the count and the suggested unit size before the bet, then the insurance hint before the insurance prompt. The dealer shows an ace, but the true count is below plus three, so the prompt recommends decline. I decline, stand on seventeen, the dealer reveals five and draws two tens, busts, and the hand pays. The next bet prompt keeps the bankroll and count going, and the suggested bet scales from one to eight units as the count rises.</p>
   </aside>
 </section>
 
@@ -3345,6 +3383,7 @@ function renderAllCharts() {
 const CLI_DECKS = 6;
 const CLI_UNIT = 25;
 const CLI_START_BANKROLL = 1000;
+const CLI_WIDTHS = [10, 100, 10, 7, 12];
 
 function cliCard(rank, suit) {
   const value = rank === "A" ? 11 : ["K", "Q", "J", "10"].includes(rank) ? 10 : Number(rank);
@@ -3407,6 +3446,13 @@ function cliRound2(value) {
   return Math.round(value * 100) / 100;
 }
 
+function cliMoney(value) {
+  return `$${Number(value).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 function cliSuggestion(cards) {
   const running = cards.reduce((sum, card) => sum + cliHiLo(card), 0);
   const decks = Math.max(0.5, (52 * CLI_DECKS - cards.length) / 52);
@@ -3448,9 +3494,7 @@ function cliCounts() {
 }
 
 function cliHint() {
-  if (cliState.phase === "bet") return "set a bet";
-  if (cliState.phase === "insurance") return "choose";
-  if (cliState.phase !== "player") return "hand over";
+  if (cliState.phase !== "player") return "stand";
   const total = cliTotal(cliState.player);
   const dealer = cliState.dealer[0]?.value === 11 ? 11 : cliState.dealer[0]?.value || 0;
   if (total >= 17) return "stand";
@@ -3459,73 +3503,150 @@ function cliHint() {
   return "hit";
 }
 
-function cliCardHTML(card, hidden = false) {
-  if (hidden) return '<div class="pcard small back" aria-label="hidden card"></div>';
-  const red = card.suit === "♥" || card.suit === "♦";
-  return `<div class="pcard small${red ? " red" : ""}"><span>${card.rank}</span><span class="suit">${card.suit}</span></div>`;
+function cliSigned(value, digits = 2) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}`;
 }
 
-function cliRenderCards(id, cards, hiddenIndex = -1) {
-  const node = document.getElementById(id);
-  if (!node) return;
-  node.innerHTML = cards
-    .map((card, index) => cliCardHTML(card, index === hiddenIndex))
-    .join("");
+function cliCardText(card) {
+  return `${card.rank}${card.suit}`;
+}
+
+function cliTableText() {
+  const dealerCards = cliState.dealer
+    .map((card, index) => (index === 1 && !cliState.reveal ? "??" : cliCardText(card)))
+    .join(" ");
+  const playerCards = cliState.player.map(cliCardText).join(" ");
+  const dealerTotal = !cliState.dealer.length ? "" : cliState.reveal ? String(cliTotal(cliState.dealer)) : "?";
+  const playerTotal = cliState.player.length ? String(cliTotal(cliState.player)) : "";
+  const dealerStatus = !cliState.reveal
+    ? ""
+    : cliTotal(cliState.dealer) > 21
+      ? "Bust"
+      : "Stand";
+  const playerStatus = cliState.player.length
+    ? cliState.phase === "player" || cliState.phase === "insurance"
+      ? "Playing"
+      : cliTotal(cliState.player) > 21
+        ? "Bust"
+        : "Stand"
+    : "";
+  const row = (cells) =>
+    `│ ${cells[0].padEnd(CLI_WIDTHS[0])} │ ${cells[1].padEnd(CLI_WIDTHS[1])} │ ` +
+    `${cells[2].padStart(CLI_WIDTHS[2])} │ ${cells[3].padStart(CLI_WIDTHS[3])} │ ` +
+    `${cells[4].padEnd(CLI_WIDTHS[4])} │`;
+  const rule = (left, mid, right) =>
+    `${left}${"─".repeat(CLI_WIDTHS[0] + 2)}${mid}${"─".repeat(CLI_WIDTHS[1] + 2)}` +
+    `${mid}${"─".repeat(CLI_WIDTHS[2] + 2)}${mid}${"─".repeat(CLI_WIDTHS[3] + 2)}` +
+    `${mid}${"─".repeat(CLI_WIDTHS[4] + 2)}${right}`;
+  return [
+    rule("╭", "┬", "╮"),
+    row(["Seat", "Cards", "Bet", "Total", "Status"]),
+    rule("├", "┼", "┤"),
+    row(["Dealer", ` ${dealerCards}`, "", dealerTotal, dealerStatus]),
+    row(["> Hand 1", ` ${playerCards}`, cliMoney(cliState.bet), playerTotal, playerStatus]),
+    rule("╰", "┴", "╯"),
+  ].join("\n");
+}
+
+function cliFooterText() {
+  const { running, trueCount } = cliCounts();
+  const dealt = cliState.seen.length + cliState.player.length + cliState.dealer.length;
+  return (
+    `Bankroll ${cliMoney(cliState.bankroll)}  |  Shoe ${312 - dealt}/312 cards` +
+    `  |  Discard ${dealt}  |  Shuffles 1  |  Running ${running >= 0 ? "+" : ""}${running}` +
+    `  |  True ${cliSigned(trueCount)}`
+  );
+}
+
+function cliGuideText() {
+  const suggestion = cliSuggestion(cliVisibleCards());
+  return (
+    `Bet guide  $${CLI_UNIT} unit  TC ${cliSigned(suggestion.trueCount)}  →  ` +
+    `${suggestion.units} unit${suggestion.units === 1 ? "" : "s"} = ${cliMoney(suggestion.amount)}`
+  );
+}
+
+function cliInsuranceText() {
+  if (cliState.phase !== "insurance") return "";
+  const { trueCount } = cliCounts();
+  return `Insurance hint: ${trueCount >= 3 ? "TAKE" : "DECLINE"}  (TC ${cliSigned(trueCount)} vs +3.00)`;
+}
+
+function cliOpenText() {
+  const width = 120;
+  const border = `╔${"═".repeat(width - 2)}╗`;
+  const row = (text) => `║${text.padEnd(width - 2)}║`;
+  return [
+    border,
+    row(" Table open"),
+    row(" Blackjack  v1.0.0"),
+    row(" 6 decks, S17, DAS, 1.5:1 blackjack, late surrender"),
+    row(` Bankroll ${cliMoney(cliState.bankroll)}   Table limits $1-$10000`),
+    border,
+    "",
+    "Type h at the bet prompt for commands.",
+    "",
+  ].join("\n");
+}
+
+function cliScreenText() {
+  const suggestion = cliSuggestion(cliVisibleCards());
+  if (cliState.phase === "bet") {
+    return [
+      cliOpenText(),
+      cliGuideText(),
+    ].join("");
+  }
+  const lines = [
+    cliTableText(),
+    cliFooterText(),
+    cliGuideText(),
+  ];
+  const insurance = cliInsuranceText();
+  if (insurance) lines.push(insurance);
+  if (cliState.phase === "result") {
+    lines.push(
+      `Dealer: ${cliState.dealer.map(cliCardText).join(" ")} (${cliTotal(cliState.dealer)})` +
+        `   Round: ${cliState.round}`
+    );
+  }
+  return lines.join("\n");
 }
 
 function cliRender() {
   if (!document.querySelector("#cliDemo")) return;
-  const { running, trueCount } = cliCounts();
+  const screen = document.getElementById("cliScreen");
+  screen.textContent = cliScreenText();
+  const { trueCount } = cliCounts();
   const suggestion = cliSuggestion(cliVisibleCards());
-  const dealerHidden = !cliState.reveal;
-  const dealerTotal = !cliState.dealer.length
-    ? "—"
-    : dealerHidden
-      ? "?"
-      : cliTotal(cliState.dealer);
-  const playerTotal = cliState.player.length ? cliTotal(cliState.player) : "—";
-  const insurance =
-    cliState.phase === "insurance" ? (trueCount >= 3 ? "TAKE" : "DECLINE") : "n/a";
-
-  cliRenderCards("cliDealerCards", cliState.dealer, dealerHidden ? 1 : -1);
-  cliRenderCards("cliPlayerCards", cliState.player);
-  document.getElementById("cliDealerTotal").textContent = dealerTotal;
-  document.getElementById("cliPlayerTotal").textContent = playerTotal;
-  document.getElementById("cliBankroll").textContent = `$${cliState.bankroll.toFixed(2)}`;
-  document.getElementById("cliRound").textContent = cliState.round || "—";
-  document.getElementById("cliCountLine").textContent =
-    `Count  R ${running >= 0 ? "+" : ""}${running} · TC ${trueCount >= 0 ? "+" : ""}${trueCount.toFixed(2)}`;
-  document.getElementById("cliSuggestLine").textContent =
-    `Suggest  ${suggestion.units}u · $${suggestion.amount.toFixed(2)}`;
-  document.getElementById("cliBetLine").textContent =
-    cliState.bet > 0 ? `Bet  $${cliState.bet.toFixed(2)}` : "Bet  —";
-  document.getElementById("cliInsuranceLine").textContent = `Insurance  ${insurance}`;
-  document.getElementById("cliHintLine").textContent = `Hint  ${cliHint()}`;
-  document.getElementById("cliResult").textContent =
-    cliState.result ||
-    (cliState.phase === "bet"
-      ? "Set a bet."
-      : cliState.dealer[0]?.rank === "A"
-        ? "Dealer ace."
-        : "Dealer up.");
-
-  const input = document.getElementById("cliBetInput");
   const playing = cliState.phase === "player";
   const insuring = cliState.phase === "insurance";
-  const prompt = document.getElementById("cliInsurancePrompt");
-  prompt.hidden = !insuring;
-  document.getElementById("cliTakeIns").classList.toggle("primary", insuring && insurance === "TAKE");
-  document.getElementById("cliDeclineIns").classList.toggle("primary", insuring && insurance === "DECLINE");
+  const betting = cliState.phase === "bet" || cliState.phase === "result";
+
+  document.getElementById("cliBetPrompt").hidden = !betting;
+  document.getElementById("cliInsPrompt").hidden = !insuring;
+  document.getElementById("cliActionPrompt").hidden = !playing;
+  document.getElementById("cliPromptBank").textContent = cliMoney(cliState.bankroll);
+  document.getElementById("cliInsAmount").textContent = cliMoney(cliState.bet / 2);
+  document.getElementById("cliInsDefault").textContent = trueCount >= 3 ? "(y)" : "(n)";
+  document.getElementById("cliStrategy").textContent = cliHint();
+
+  const input = document.getElementById("cliBetInput");
   input.disabled = playing || insuring;
-  if (cliState.phase === "result") input.value = String(Math.floor(suggestion.amount));
-  else if (!playing && !insuring) input.value = input.value || "25";
-  document.getElementById("cliDeal").disabled = playing || insuring;
-  document.getElementById("cliHit").disabled = !playing;
-  document.getElementById("cliStand").disabled = !playing;
+  if (betting) {
+    input.value = String(Math.floor(suggestion.amount));
+  } else if (cliState.bet > 0) {
+    input.value = String(cliState.bet);
+  }
+
+  document.getElementById("cliTakeIns").classList.toggle("primary", insuring && trueCount >= 3);
+  document.getElementById("cliDeclineIns").classList.toggle("primary", insuring && trueCount < 3);
+  document.getElementById("cliHit").classList.toggle("primary", playing && cliHint() === "hit");
+  document.getElementById("cliStand").classList.toggle("primary", playing && cliHint() === "stand");
 }
 
 function cliDeal() {
-  if (cliState.phase === "player") return;
+  if (cliState.phase === "player" || cliState.phase === "insurance") return;
   if (cliState.player.length) {
     cliState.seen.push(...cliState.player, ...cliState.dealer);
   }
@@ -3545,8 +3666,8 @@ function cliDeal() {
   cliState.player = [];
   cliState.dealer = [];
   cliState.reveal = false;
-  cliState.phase = "player";
   cliState.insuranceBet = 0;
+  cliState.phase = "player";
   cliState.result = "";
   cliState.round = `-$${bet.toFixed(2)}`;
   for (let i = 0; i < 4; i += 1) {
@@ -3555,13 +3676,6 @@ function cliDeal() {
     else cliState.dealer.push(card);
   }
   if (cliState.dealer[0]?.rank === "A") cliState.phase = "insurance";
-  cliRender();
-}
-
-function cliReset() {
-  cliState = cliStateInit();
-  const input = document.getElementById("cliBetInput");
-  if (input) input.value = "25";
   cliRender();
 }
 
@@ -3606,24 +3720,27 @@ function cliStand() {
   cliState.phase = "result";
   const player = cliTotal(cliState.player);
   const dealer = cliTotal(cliState.dealer);
-  let net = -cliState.bet;
+  let mainNet = -cliState.bet;
   if (dealer > 21 || player > dealer) {
     cliState.bankroll = cliRound2(cliState.bankroll + cliState.bet * 2);
-    net = cliState.bet;
-    cliState.result = `Dealer ${dealer > 21 ? "busts" : dealer} · ${net >= 0 ? "+" : ""}$${net.toFixed(2)}`;
+    mainNet = cliState.bet;
   } else if (player === dealer) {
     cliState.bankroll = cliRound2(cliState.bankroll + cliState.bet);
-    net = 0;
-    cliState.result = "Push · $0.00";
-  } else {
-    cliState.result = `Dealer ${dealer} · -$${cliState.bet.toFixed(2)}`;
+    mainNet = 0;
   }
-  net = cliRound2(net - cliState.insuranceBet);
+  const net = cliRound2(mainNet - cliState.insuranceBet);
   cliState.round = `${net >= 0 ? "+" : ""}$${net.toFixed(2)}`;
-  if (net !== 0) {
-    const label = cliState.result.split(" · ")[0] || "Hand";
-    cliState.result = `${label} · ${net >= 0 ? "+" : ""}$${net.toFixed(2)}`;
-  }
+  cliState.result =
+    dealer > 21
+      ? `Dealer busts · ${net >= 0 ? "+" : ""}$${net.toFixed(2)}`
+      : `Dealer ${dealer} · ${net >= 0 ? "+" : ""}$${net.toFixed(2)}`;
+  cliRender();
+}
+
+function cliReset() {
+  cliState = cliStateInit();
+  const input = document.getElementById("cliBetInput");
+  if (input) input.value = "25";
   cliRender();
 }
 
@@ -3634,7 +3751,6 @@ function initCLIDemo() {
   document.getElementById("cliDeclineIns").addEventListener("click", cliDeclineInsurance);
   document.getElementById("cliHit").addEventListener("click", cliHit);
   document.getElementById("cliStand").addEventListener("click", cliStand);
-  document.getElementById("cliReset").addEventListener("click", cliReset);
   cliReset();
 }
 

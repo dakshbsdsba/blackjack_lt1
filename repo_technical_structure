@@ -18,28 +18,36 @@ blackjack_lt1/
     |-- Makefile
     |-- README.md
     |-- VERIFICATION.md
+    |-- blackjack_rules
+    |-- payout_structures
     |-- pyproject.toml
+    |-- repo_technical_structure
     |-- requirements.txt
-    |-- technical_guide.txt
+    |-- strategies.txt
 
 Main directories:
 
-blackjack/     - Main source code of the program.
-notebooks/     - Demonstrations and data analysis.
-presentation/  - Project presentation materials.
-tests/         - Automated program testing.
+blackjack/    - Main source code of the program.
+notebooks/    - Demonstrations and data analysis.
+presentation/ - Project presentation materials.
+tests/        - Automated program testing.
 
-Configuration and documentation:
+Configuration files:
 
-README.md           - Project information and instructions.
-VERIFICATION.md     - Project verification details.
-requirements.txt    - Required Python libraries.
-pyproject.toml      - Project and tool configurations.
-Makefile            - Automates development tasks.
-.flake8             - Code quality checking settings.
-.gitignore          - Excludes unnecessary files from Git.
-technical_guide.txt - Technical documentation of the project.
+requirements.txt - Required Python libraries.
+pyproject.toml   - Project and tool configurations.
+Makefile         - Automates development tasks.
+.flake8          - Code quality checking settings.
+.gitignore       - Excludes unnecessary files from Git.
 
+Documentation and user guides:
+
+README.md                - Project information and instructions.
+VERIFICATION.md          - Project verification details.
+blackjack_rules          - Explains the rules of Blackjack.
+payout_structures        - Explains payouts for different outcomes.
+repo_technical_structure - Explains the repository structure, Python modules, and technical components.
+strategies.txt           - Explains the different playing and betting strategies used in the program.
 
 MAIN PYTHON MODULES
 --------------------------------------------------
@@ -110,13 +118,9 @@ Simulation and Analysis:
         v
     Charts and Output (charts.py)
 
-The strategy.py and counting.py modules provide
-strategy recommendations and card-counting information.
-
-The tests/ directory verifies program functionality.
-According to the project's documented verification,
-513 automated tests passed.
-
+The tests/ directory contains automated tests that
+verify the functionality and correctness of the
+program's components.
 
 PURPOSE OF THE MODULAR STRUCTURE
 --------------------------------------------------

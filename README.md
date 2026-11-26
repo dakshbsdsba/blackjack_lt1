@@ -143,6 +143,24 @@ The suite covers chip accounting, all payout types, dealer soft-17 behaviour, ev
 
 A bet is deducted when the hand starts. A win returns the stake plus an equal profit, a blackjack returns the stake plus 1.5 times the stake, a push returns the stake, and a surrender returns half the stake. Doubles and splits post an additional bet of the original size. Insurance is a separate half-unit bet that pays 2:1 when the dealer has a natural. `total_wagered` includes insurance, so the reported house edge is the net result divided by all money put at risk.
 
+## Run the Monte Carlo comparison
+
+The full flat-versus-Hi-Lo simulation is:
+
+```bash
+python -m blackjack --simulate 100000 --bet 10 --bankroll 1000000
+```
+
+It runs both strategies on the same seed, prints the side-by-side result table, and reports both house edge and player edge. Add `--html comparison.html` to write the bankroll and EV comparison chart.
+
+## Why the core simulator is loop-based, not vectorized
+
+The engine is intentionally a per-hand loop. Blackjack is path-dependent: each card changes the legal actions, a split creates several hands with independent bets and state, and the dealer only plays after the player finishes. A vectorized version would need masks for every state, split hand, dealer draw and settlement path. That would make the rules harder to read and much easier to get subtly wrong.
+
+The loop keeps one hand as one explicit path through the state machine. That is the main design tradeoff: readability and rule fidelity over raw throughput. The 100,000-round comparison takes seconds, which is fast enough for this project. The loop is also why the tests can assert exact transitions and hand results.
+
+Vectorization is used where it fits. NumPy handles the settled-hand arrays, drawdowns and chart series, and pandas builds the comparison tables. If throughput became the priority, the next step would be parallel independent trials with multiprocessing or Numba, not vectorizing the inside of a single hand.
+
 ## Results from the verification run
 
 | Check | Result |

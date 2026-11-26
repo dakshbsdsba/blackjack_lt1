@@ -122,6 +122,7 @@ requirements.txt
 8. Count profitability buckets and a comparison of flat betting with a Hi-Lo spread.
 9. The five-bot leaderboard.
 10. The test suite result.
+11. Trainer mode with the bet guide and insurance hint.
 
 The notebook is executed end to end, and its outputs are stored in the file.
 

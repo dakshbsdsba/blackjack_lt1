@@ -167,8 +167,8 @@ Vectorization is used where it fits. NumPy handles the settled-hand arrays, draw
 | --- | --- |
 | Full test suite | 513 passed |
 | Flat basic strategy, 300,000 rounds | House edge 0.347 percent over 308,277 settled hands |
-| Flat basic strategy, notebook run | House edge 0.394 percent over 205,529 settled hands |
-| Hi-Lo spread, 100,000 rounds | Player edge 0.508 percent over 102,755 settled hands |
+| Flat basic strategy, notebook run | House edge 0.121 percent over 102,755 settled hands |
+| Hi-Lo spread, 100,000 rounds | Player edge 0.501 percent over 102,755 settled hands |
 | black | 25 files unchanged |
 | flake8 | No findings |
 | Notebook | Executed end to end with no error outputs |

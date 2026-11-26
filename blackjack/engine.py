@@ -63,11 +63,13 @@ class HandResult:
     start_total: int
     dealer_upcard: str
     cards: tuple[str, ...]
+    insurance_bet: float = 0.0
+    insurance_net: float = 0.0
 
     @property
     def wagered(self) -> float:
-        """Amount at risk on the hand, including a double."""
-        return self.bet
+        """Amount at risk on the hand, including a double and insurance."""
+        return round(self.bet + self.insurance_bet, 2)
 
 
 @dataclass(frozen=True)
@@ -455,6 +457,17 @@ class BlackjackGame:
                 net = 0.0
                 outcome = Outcome.PUSH
 
+            insurance_bet = 0.0
+            insurance_net = 0.0
+            if index == 0 and self.insurance_bet:
+                insurance_bet = self.insurance_bet
+                insurance_net = (
+                    round(self.insurance_bet * 2, 2)
+                    if dealer_blackjack
+                    else -self.insurance_bet
+                )
+                net = round(net + insurance_net, 2)
+
             self.bankroll = round(self.bankroll + payout, 2)
             self.total_net = round(self.total_net + net, 2)
             result = HandResult(
@@ -471,6 +484,8 @@ class BlackjackGame:
                 start_total=hand.start_total or hand.total,
                 dealer_upcard=upcard,
                 cards=tuple(str(card) for card in hand.cards),
+                insurance_bet=insurance_bet,
+                insurance_net=insurance_net,
             )
             self.round_results.append(result)
             self.history.append(result)

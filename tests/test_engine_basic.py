@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from blackjack import BlackjackGame, GameState, Outcome, Rules
+from blackjack import Analytics, BlackjackGame, GameState, Outcome, Rules
 from tests.helpers import rig_shoe, start
 
 
@@ -207,8 +207,14 @@ def test_insurance_lost_when_dealer_has_no_blackjack() -> None:
     assert game.bankroll == pytest.approx(962.5)
     assert game.state is GameState.PLAYER
     game.act("stand")
-    assert game.round_results[0].outcome is Outcome.LOSS
+    result = game.round_results[0]
+    assert result.outcome is Outcome.LOSS
+    assert result.net == pytest.approx(-37.5)
+    assert result.insurance_bet == pytest.approx(12.5)
+    assert result.insurance_net == pytest.approx(-12.5)
+    assert result.wagered == pytest.approx(37.5)
     assert game.bankroll == pytest.approx(962.5)
+    assert game.total_net == pytest.approx(-37.5)
     assert game.total_wagered == pytest.approx(37.5)
 
 
@@ -219,9 +225,19 @@ def test_insurance_pays_two_to_one_on_dealer_blackjack() -> None:
     game.start_hand(25.0)
     game.take_insurance(True)
     assert game.bankroll == pytest.approx(1000.0)
-    assert game.round_results[0].outcome is Outcome.LOSS
-    assert game.round_results[0].net == -25.0
+    result = game.round_results[0]
+    assert result.outcome is Outcome.LOSS
+    assert result.net == pytest.approx(0.0)
+    assert result.insurance_bet == pytest.approx(12.5)
+    assert result.insurance_net == pytest.approx(25.0)
+    assert result.wagered == pytest.approx(37.5)
+    assert game.round_net == pytest.approx(0.0)
+    assert game.total_net == pytest.approx(0.0)
     assert game.insurance_bet == 12.5
+    stats = Analytics.from_results(game.history, starting_bankroll=1000.0)
+    assert stats.net == pytest.approx(0.0)
+    assert stats.final_bankroll == pytest.approx(1000.0)
+    assert stats.wagered == pytest.approx(37.5)
 
 
 def test_declining_insurance_keeps_the_chips() -> None:

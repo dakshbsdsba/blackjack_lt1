@@ -943,11 +943,9 @@ body.light .backup-strip { background: #ecfeff; }
   <div class="slide-inner">
     <div class="kicker">PROG1301 · Group project</div>
     <h1>Blackjack<span class="accent">.</span><br>From a deck of cards to a Monte Carlo lab.</h1>
-    <p class="lede">A playable table, a strategy engine, a card counter, and 513 tests that keep the math honest.</p>
+    <p class="lede">A playable table, a strategy engine, a card counter and 513 tests.</p>
     <div class="title-meta">
       <span>Daksh · Julia · Ziah · Clark · Victoria</span>
-      <span>Use ← → or Space</span>
-      <span>Every demo is live</span>
     </div>
     <div class="hero-cards" aria-hidden="true">
       <div class="pcard c1"><span>A</span><span class="suit">♠</span></div>
@@ -969,12 +967,12 @@ body.light .backup-strip { background: #ecfeff; }
       <button class="qcard" data-answer="About 0.4% on the flat game. Small enough to feel fair, large enough to pay the casino.">
         <div class="qnum">Question 1</div>
         <strong>What is the house edge, really?</strong>
-        <span>Everyone knows the casino wins. By how much, and why?</span>
+        <span>By how much, and why?</span>
       </button>
       <button class="qcard" data-answer="Yes, with a bet spread. Across 300,000-hand runs, the flat game paid the house 0.35%; the Hi-Lo spread returned 0.48% to the player.">
         <div class="qnum">Question 2</div>
         <strong>Does card counting still work?</strong>
-        <span>Or is that just a trick from the movies?</span>
+        <span>Or just a movie trick?</span>
       </button>
       <button class="qcard" data-answer="Not the martingale. It can win a short session, then the table limit or the bankroll ends it.">
         <div class="qnum">Question 3</div>
@@ -982,7 +980,7 @@ body.light .backup-strip { background: #ecfeff; }
         <span>Flat, martingale, count spread or Kelly?</span>
       </button>
     </div>
-    <div class="answer-strip" id="qAnswer">Click a question. The rest of the talk is the evidence.</div>
+    <div class="answer-strip" id="qAnswer">Click a question. The rest is evidence.</div>
     <div class="btn-row"><button class="btn small ghost" id="revealAll">Reveal all three</button></div>
   </div>
   <aside class="notes">
@@ -1051,32 +1049,25 @@ body.light .backup-strip { background: #ecfeff; }
           <span class="state-arrow">→</span>
           <div class="state-box green">SETTLED</div>
         </div>
-        <div class="state-note">Insurance branches off the deal only when the dealer shows an ace. Naturals can jump straight to SETTLED.</div>
-        <div class="state-note">The state machine is why the CLI cannot ask for a double after a hit, or a surrender after a split.</div>
+        <div class="state-note">Only PLAYER accepts actions.<br>available_actions() is the whitelist.<br>act() raises on anything else.</div>
       </div>
       <div class="codewalk" data-steps='[
-        {"lines":[1,2,3],"text":"Only the PLAYER state accepts actions. Everything else raises."},
-        {"lines":[4,5,6,7],"text":"Ask the engine for the legal action list. If the action is not in it, reject the move."},
-        {"lines":[9,10,11,12,13,14],"text":"Hit mutates only the current hand. Bust or 21 finishes it."},
-        {"lines":[15,16,17],"text":"Stand finishes the hand, then _advance moves to the next unfinished split hand."}
+        {"lines":[1,2,3],"text":"State is the first gate. Anything except PLAYER raises."},
+        {"lines":[4,5],"text":"Legal actions are the second gate. Anything else raises."},
+        {"lines":[7,8,9,10,11,12],"text":"Only then does the engine mutate the current hand."}
       ]'>
         <pre class="code" data-lang="python">
 def act(self, action: str) -> None:
     if self.state is not GameState.PLAYER:
         raise RuntimeError("The table is not accepting actions")
-    available = self.available_actions()
-    if action not in available:
+    if action not in self.available_actions():
         raise ValueError(f"Illegal action {action!r}")
 
     hand = self.player_hand
-
     if action == "hit":
         hand.add(self._draw())
         if hand.is_bust or hand.total == 21:
             hand.stood = True
-        self._advance()
-    elif action == "stand":
-        hand.stood = True
         self._advance()
         </pre>
         <div class="code-ui">
@@ -1094,7 +1085,7 @@ def act(self, action: str) -> None:
 <section class="slide" data-section="Money" data-title="Every payout is a formula">
   <div class="slide-inner">
     <div class="kicker">05 · Money</div>
-    <h2>Every payout is a formula, not a feeling.</h2>
+    <h2>Every payout is a formula.</h2>
     <div class="grid-2">
       <div class="panel" id="payoutCalc">
         <div class="btn-row" style="justify-content:space-between;">
@@ -1115,7 +1106,6 @@ def act(self, action: str) -> None:
           <div class="box"><div class="k">Profit</div><div class="v" id="payProfit">+$37</div></div>
         </div>
         <div class="small" id="payOutcomeLabel" style="margin-top:8px;">Blackjack</div>
-        <p class="small" style="margin-top:10px;">The stake is deducted when the hand starts. Every payout credits the bankroll and writes one HandResult. The analytics layer only reads those records.</p>
       </div>
       <div>
         <div class="panel tight">
@@ -1128,14 +1118,11 @@ def act(self, action: str) -> None:
             <div class="payout-row"><span>Insurance</span><b>3x the half-unit stake</b></div>
           </div>
         </div>
-        <pre class="code" data-lang="python" style="margin-top:10px;">
-if hand.is_blackjack:
-    payout = bet * (1 + self.rules.blackjack_payout)
-elif self.dealer.is_bust or hand.total > dealer_total:
-    payout = bet * 2
-elif hand.total == dealer_total:
-    payout = bet
-        </pre>
+        <div class="panel tight" style="margin-top:10px;">
+          <div class="small" style="letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);font-weight:700;">House edge</div>
+          <div class="mono" style="font-size:1.05rem;color:var(--ink);margin:4px 0 3px;">-Σ net / Σ wagered</div>
+          <div class="small">Every bet, double, split and insurance unit is in the denominator.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1284,20 +1271,19 @@ def true_count(self, decks_remaining: float) -> float:
   </aside>
 </section>
 
-<section class="slide" data-section="Tier 3 · Quality gate" data-title="Advanced goals, checked at the gate">
+<section class="slide" data-section="Quality gate" data-title="513 tests, one gate">
   <div class="slide-inner">
     <div class="kicker">09 · Quality gate</div>
-    <h2>Advanced goals, checked at the gate.</h2>
+    <h2>513 tests. One gate.</h2>
     <div class="grid-2">
-      <div class="panel tier">
-        <div class="tier-head"><span class="weight">20%</span><h3>Tier 3 · Advanced</h3></div>
-        <ul>
-          <li>Multi-deck shoe, cut card and discard tray.</li>
-          <li>Hi-Lo running count and true count.</li>
-          <li>Flat, martingale, spread and Kelly bots.</li>
-          <li>Monte Carlo convergence and count accounting.</li>
-        </ul>
-        <div class="evidence">0.3467% house edge over 308,277 hands · -0.5082% counting edge · 513 tests</div>
+      <div class="panel">
+        <div class="stat-row four">
+          <div class="stat"><div class="label">Tests</div><div class="big" data-count="513">0</div></div>
+          <div class="stat"><div class="label">Strategy</div><div class="big" data-count="376">0</div></div>
+          <div class="stat"><div class="label">Flake8</div><div class="big" data-count="0">0</div></div>
+          <div class="stat"><div class="label">Black files</div><div class="big" data-count="25">0</div></div>
+        </div>
+        <p class="small" style="margin-top:12px;">The gate is pytest, Black, Flake8 and an executed notebook.</p>
       </div>
       <div class="panel">
         <div class="terminal">
@@ -1310,14 +1296,8 @@ def true_count(self, decks_remaining: float) -> float:
           <div><span class="prompt">$</span> jupyter nbconvert --execute ...</div>
           <div class="ok">notebook executed, zero errors</div>
         </div>
-        <p class="small" style="margin-top:8px;">Full type hints on the public API. Docstrings across the package. The notebook runs the quick suite at the end.</p>
+        <p class="small" style="margin-top:8px;">Full type hints. Docstrings. The notebook executes end to end.</p>
       </div>
-    </div>
-    <div class="stat-row">
-      <div class="stat"><div class="label">Tests</div><div class="big" data-count="513">0</div></div>
-      <div class="stat"><div class="label">Strategy cases</div><div class="big" data-count="376">0</div></div>
-      <div class="stat"><div class="label">Flake8 findings</div><div class="big" data-count="0">0</div></div>
-      <div class="stat"><div class="label">Black files</div><div class="big" data-count="25">0</div></div>
     </div>
   </div>
   <aside class="notes">
@@ -1332,26 +1312,24 @@ def true_count(self, decks_remaining: float) -> float:
     <h2>What we would build next.</h2>
     <div class="grid-2">
       <div class="panel">
-        <h3>What we did not build</h3>
+        <h3>Not built</h3>
         <ul class="checklist" style="margin-top:8px;">
-          <li>No full index plays beyond insurance.</li>
-          <li>No side bets or progressive jackpots.</li>
-          <li>No true simultaneous multi-seat table.</li>
-          <li>No browser game, the UI is terminal and notebook.</li>
+          <li>Full index play.</li>
+          <li>Side bets.</li>
+          <li>Multi-seat table.</li>
         </ul>
       </div>
       <div class="panel">
-        <h3>What we would add</h3>
+        <h3>Next</h3>
         <ul class="checklist" style="margin-top:8px;">
-          <li>Count deviations for close hands.</li>
-          <li>A multi-seat table with one shared dealer hand.</li>
-          <li>A web UI and a live dealer mode.</li>
-          <li>More betting systems and risk-of-ruin metrics.</li>
+          <li>Count deviations.</li>
+          <li>Multi-seat table.</li>
+          <li>Web UI.</li>
         </ul>
       </div>
     </div>
     <div class="panel tight">
-      <p class="small">What surprised us: variance is large enough that a short session can crown the martingale. The long run is the only honest judge.</p>
+      <p class="small">Variance can crown a martingale for a session. The long run cannot.</p>
     </div>
   </div>
   <aside class="notes">
@@ -1375,8 +1353,7 @@ python -m pytest -q
       <div class="panel">
         <h3>Repo</h3>
         <p class="mono" style="margin-top:8px; color:var(--ink);">github.com/dakshbsdsba/blackjack_lt1</p>
-        <p class="small">main · latest commit</p>
-        <p class="small" style="margin-top:10px;">The engine owns the rules. The hand owns its cards and bet. The strategy table turns a hand and an upcard into an action. The counter turns cards into a true count. The simulator turns hands into arrays. The charts turn arrays into pictures.</p>
+        <p class="small" style="margin-top:10px;">The engine owns the rules. Everything else reads it.</p>
       </div>
     </div>
   </div>

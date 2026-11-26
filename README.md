@@ -66,7 +66,7 @@ jupyter notebook notebooks/Prog_Project.ipynb
 
 ## Presentation
 
-`presentation/blackjack_presentation.html` is a single self-contained 12-slide deck with live demos, speaker notes, a timer and keyboard controls. Three reference-only Q&A slides sit at the end: they are visible in normal windowed mode and disappear in fullscreen. Open it directly in a browser, or serve the folder with `python3 presentation/serve.py --port 8088 --root presentation --state /tmp/blackjack-notes` to enable the editable shared notes. See `presentation/README.md` for the controls, notes API and data builder.
+`presentation/blackjack_presentation.html` is a single self-contained 12-slide deck with live demos, speaker notes, a timer and keyboard controls. The presented slides are deliberately sparse. The detailed mechanics live in the speaker notes and the reference slides. Three reference-only Q&A slides sit at the end: they are visible in normal windowed mode and disappear in fullscreen. Open it directly in a browser, or serve the folder with `python3 presentation/serve.py --port 8088 --root presentation --state /tmp/blackjack-notes` to enable the editable shared notes. See `presentation/README.md` for the controls, notes API and data builder.
 
 ## Rules implemented
 

@@ -2,7 +2,7 @@
 
 Open `blackjack_presentation.html` in a browser. It is a single self-contained file: CSS, JavaScript, charts and a snapshot of the simulator data are embedded, so it works offline and needs no server.
 
-The deck has 12 presented slides, live demos, speaker notes, a 9-minute target timer with a 1-minute buffer, light/dark themes and keyboard controls. Three reference-only Q&A slides (13 to 15) are visible in normal windowed mode and are removed from the deck in fullscreen. Presenter assignments match the Division of labor table in the root README. The presenter's name is in the top-left of every slide, and the overview page shows who is presenting each slide.
+The deck has 12 presented slides, live demos, speaker notes, a 9-minute target timer with a 1-minute buffer, light/dark themes and keyboard controls. The presented slides are sparse by design. The detailed mechanics live in the speaker notes and the reference slides 13 to 15. Three reference-only Q&A slides (13 to 15) are visible in normal windowed mode and are removed from the deck in fullscreen. Presenter assignments match the Division of labor table in the root README. The presenter's name is in the top-left of every slide, and the overview page shows who is presenting each slide.
 
 ## Controls
 

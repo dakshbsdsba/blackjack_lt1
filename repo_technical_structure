@@ -1,1 +1,132 @@
+ABOUT THE PROJECT
+--------------------------------------------------
+The Blackjack Simulator is developed using Python.
+It is divided into different modules that handle
+game mechanics, betting strategies, simulations,
+and statistical analysis.
+
+
+REPOSITORY STRUCTURE
+--------------------------------------------------
+blackjack_lt1/
+    |-- blackjack/
+    |-- notebooks/
+    |-- presentation/
+    |-- tests/
+    |-- .flake8
+    |-- .gitignore
+    |-- Makefile
+    |-- README.md
+    |-- VERIFICATION.md
+    |-- pyproject.toml
+    |-- requirements.txt
+    |-- technical_guide.txt
+
+Main directories:
+
+blackjack/     - Main source code of the program.
+notebooks/     - Demonstrations and data analysis.
+presentation/  - Project presentation materials.
+tests/         - Automated program testing.
+
+Configuration and documentation:
+
+README.md           - Project information and instructions.
+VERIFICATION.md     - Project verification details.
+requirements.txt    - Required Python libraries.
+pyproject.toml      - Project and tool configurations.
+Makefile            - Automates development tasks.
+.flake8             - Code quality checking settings.
+.gitignore          - Excludes unnecessary files from Git.
+technical_guide.txt - Technical documentation of the project.
+
+
+MAIN PYTHON MODULES
+--------------------------------------------------
+cards.py      - Card and deck management.
+hand.py       - Calculation of hand values.
+rules.py      - Blackjack game rules.
+engine.py     - Game mechanics and round outcomes.
+strategy.py   - Basic strategy decisions.
+counting.py   - Hi-Lo card counting.
+analytics.py  - Statistical analysis of game results.
+bots.py       - Automated playing and betting strategies.
+simulation.py - Repeated game simulations.
+charts.py     - Data visualization.
+cli.py        - Command-line user interface.
+
+
+LIBRARIES AND DEVELOPMENT TOOLS
+--------------------------------------------------
+NumPy    - Numerical calculations, simulation arrays,
+           and graph preparation (simulation.py, charts.py).
+Pandas   - Data organization and analysis
+           (listed in requirements.txt).
+Plotly   - Interactive graphs and visualizations
+           (charts.py).
+Rich     - Terminal interface and formatted output
+           (cli.py).
+Pytest   - Automated testing of program functionality
+           (tests/).
+Jupyter  - Interactive demonstrations and analysis
+           (notebooks/Prog_Project.ipynb).
+Black    - Python code formatting.
+Flake8   - Code quality and style checking.
+nbformat - Jupyter Notebook file handling.
+nbclient - Notebook execution and verification.
+ipykernel - Python execution within Jupyter Notebook.
+Built-in Python modules:
+dataclasses - Organizes structured data.
+typing      - Provides type annotations.
+
+Both are used in analytics.py.
+External dependencies are listed in requirements.txt.
+
+GENERAL PROGRAM FLOW
+--------------------------------------------------
+Interactive Gameplay:
+
+    User Input (cli.py)
+        |
+        v
+    Game Engine (engine.py)
+        |
+        v
+    Cards, Hands, Rules and Strategies
+        |
+        v
+    Game Results
+
+Simulation and Analysis:
+
+    Automated Players (bots.py)
+        |
+        v
+    Game Simulations (simulation.py)
+        |
+        v
+    Statistical Analysis (analytics.py)
+        |
+        v
+    Charts and Output (charts.py)
+
+The strategy.py and counting.py modules provide
+strategy recommendations and card-counting information.
+
+The tests/ directory verifies program functionality.
+According to the project's documented verification,
+513 automated tests passed.
+
+
+PURPOSE OF THE MODULAR STRUCTURE
+--------------------------------------------------
+The project separates its functions into different
+Python files to make the program more organized.
+
+This allows developers to modify, test, and debug
+individual components without unnecessarily
+affecting other parts of the program.
+
+It also improves code readability, reusability,
+maintainability, and collaboration among developers.
 

@@ -542,8 +542,10 @@ def run_report(args: argparse.Namespace) -> int:
     """Run flat and Hi-Lo Monte Carlo simulations and compare them."""
     console = Console()
     rules = Rules(num_decks=args.decks, penetration=args.penetration)
-    seed = args.seed if args.seed is not None else 42
-    console.print(f"Simulating {args.simulate:,} rounds for flat and Hi-Lo...")
+    seed = args.seed if args.seed is not None else 7
+    console.print(
+        f"Simulating {args.simulate:,} rounds for flat and Hi-Lo " f"(seed {seed})..."
+    )
     started = time.perf_counter()
     flat = run_simulation(
         args.simulate,

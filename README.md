@@ -55,7 +55,7 @@ python -m blackjack --demo --rounds 1000
 Run a flat and Hi-Lo Monte Carlo comparison:
 
 ```bash
-python -m blackjack --simulate 100000 --bet 10 --bankroll 1000000
+python -m blackjack --simulate 100000 --bet 10 --bankroll 1000000 --seed 7
 ```
 
 Open the notebook:

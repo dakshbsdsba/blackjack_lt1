@@ -1032,7 +1032,7 @@ body.light .backup-strip { background: #ecfeff; }
 /* CLI Live Demo: larger readout, fewer labels */
 .cli-readout { gap: 9px; }
 .cli-line {
-  font-size: clamp(0.82rem, 1.02vw, 1rem);
+  font-size: clamp(0.88rem, 1.1vw, 1.05rem);
   line-height: 1.5;
   letter-spacing: 0.01em;
 }
@@ -1040,6 +1040,40 @@ body.light .backup-strip { background: #ecfeff; }
 .cli-seat { font-size: clamp(0.7rem, 0.82vw, 0.82rem); }
 .cli-result { font-size: clamp(0.7rem, 0.82vw, 0.86rem); }
 .cli-actions .btn { padding: 7px 12px; font-size: clamp(0.72rem, 0.82vw, 0.86rem); }
+
+/* CLI bank row and per-hand bet control */
+.cli-bank { grid-template-columns: 64px 1fr auto; }
+.cli-bank .mono { color: #cbd5e1; font-size: clamp(0.78rem, 0.9vw, 0.92rem); }
+.cli-round {
+  font-family: var(--mono);
+  font-size: clamp(1.02rem, 1.25vw, 1.18rem);
+  font-weight: 800;
+  color: #f8fafc;
+  text-align: right;
+  min-width: 92px;
+  white-space: nowrap;
+}
+.cli-bet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #cbd5e1;
+  font-family: var(--mono);
+  font-size: clamp(0.7rem, 0.8vw, 0.82rem);
+  white-space: nowrap;
+}
+.cli-bet input {
+  width: 74px;
+  padding: 5px 7px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #0b1424;
+  color: #f8fafc;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+.cli-bet input:disabled { opacity: 0.45; }
+.cli-actions { flex-wrap: wrap; }
 
 </style>
 </head>
@@ -1382,28 +1416,30 @@ def true_count(self, decks_remaining: float) -> float:
           </div>
           <div class="cli-row cli-bank">
             <span class="cli-seat">Bank</span>
-            <span class="mono" id="cliBankroll">$975.00</span>
-            <span class="cli-total" id="cliRound">-$25</span>
+            <span class="mono cli-bankroll" id="cliBankroll">$1,000.00</span>
+            <span class="cli-round" id="cliRound">—</span>
           </div>
         </div>
         <div class="cli-readout">
-          <div class="cli-line" id="cliCountLine">Count  R -2 · TC -0.34</div>
-          <div class="cli-line accent" id="cliBetLine">Bet  1u · $25</div>
-          <div class="cli-line warn" id="cliInsuranceLine">Insurance  DECLINE</div>
-          <div class="cli-line hint" id="cliHintLine">Hint  stand</div>
+          <div class="cli-line" id="cliCountLine">Count  R 0 · TC 0.00</div>
+          <div class="cli-line accent" id="cliSuggestLine">Suggest  1u · $25.00</div>
+          <div class="cli-line" id="cliBetLine">Bet  —</div>
+          <div class="cli-line warn" id="cliInsuranceLine">Insurance  n/a</div>
+          <div class="cli-line hint" id="cliHintLine">Hint  set a bet</div>
         </div>
         <div class="cli-actions">
-          <button class="btn small" id="cliHit">Hit</button>
-          <button class="btn small primary" id="cliStand">Stand</button>
-          <button class="btn small" id="cliNext" disabled>Next hand</button>
+          <label class="cli-bet">Bet $<input id="cliBetInput" type="number" min="1" max="10000" step="5" value="25"></label>
+          <button class="btn small primary" id="cliDeal">Deal</button>
+          <button class="btn small" id="cliHit" disabled>Hit</button>
+          <button class="btn small" id="cliStand" disabled>Stand</button>
           <button class="btn small ghost" id="cliReset">Reset</button>
-          <span class="cli-result" id="cliResult">Dealer ace.</span>
+          <span class="cli-result" id="cliResult">Set a bet.</span>
         </div>
       </div>
     </div>
   </div>
   <aside class="notes">
-    <p>Here is the CLI flow, mirrored in the deck so I can play it without leaving the browser. The command above is the real one. The dealer shows an ace, so the insurance hint is live. The true count is below plus three, so it says decline. I stand on seventeen, the dealer reveals five and draws two tens, busts, and the hand pays. The bet guide scales from one to eight units as the count rises, and Next hand keeps the bankroll and count going.</p>
+    <p>Here is the CLI flow, mirrored in the deck so I can play it without leaving the browser. The command above is the real one. I set the bet and deal. The trainer row shows the count, the suggested unit size and the insurance hint. The dealer shows an ace, but the true count is below plus three, so it says decline. I stand on seventeen, the dealer reveals five and draws two tens, busts, and the hand pays. Deal keeps the bankroll and count going, and the suggested bet scales from one to eight units as the count rises.</p>
   </aside>
 </section>
 
@@ -3346,7 +3382,7 @@ function cliRound2(value) {
   return Math.round(value * 100) / 100;
 }
 
-function cliRecommendation(cards) {
+function cliSuggestion(cards) {
   const running = cards.reduce((sum, card) => sum + cliHiLo(card), 0);
   const decks = Math.max(0.5, (52 * CLI_DECKS - cards.length) / 52);
   const trueCount = running / decks;
@@ -3361,9 +3397,8 @@ function cliStateInit() {
     player: [],
     dealer: [],
     bet: 0,
-    betUnits: 1,
     bankroll: CLI_START_BANKROLL,
-    phase: "result",
+    phase: "bet",
     reveal: false,
     result: "",
     round: "",
@@ -3387,6 +3422,8 @@ function cliCounts() {
 }
 
 function cliHint() {
+  if (cliState.phase === "bet") return "set a bet";
+  if (cliState.phase !== "player") return "hand over";
   const total = cliTotal(cliState.player);
   const dealer = cliState.dealer[0]?.value === 11 ? 11 : cliState.dealer[0]?.value || 0;
   if (total >= 17) return "stand";
@@ -3412,9 +3449,14 @@ function cliRenderCards(id, cards, hiddenIndex = -1) {
 function cliRender() {
   if (!document.querySelector("#cliDemo")) return;
   const { running, trueCount } = cliCounts();
+  const suggestion = cliSuggestion(cliVisibleCards());
   const dealerHidden = !cliState.reveal;
-  const dealerTotal = dealerHidden ? "?" : cliTotal(cliState.dealer);
-  const playerTotal = cliTotal(cliState.player);
+  const dealerTotal = !cliState.dealer.length
+    ? "—"
+    : dealerHidden
+      ? "?"
+      : cliTotal(cliState.dealer);
+  const playerTotal = cliState.player.length ? cliTotal(cliState.player) : "—";
   const insurance =
     cliState.phase === "player" && cliState.dealer[0]?.rank === "A"
       ? trueCount >= 3
@@ -3427,23 +3469,30 @@ function cliRender() {
   document.getElementById("cliDealerTotal").textContent = dealerTotal;
   document.getElementById("cliPlayerTotal").textContent = playerTotal;
   document.getElementById("cliBankroll").textContent = `$${cliState.bankroll.toFixed(2)}`;
-  document.getElementById("cliRound").textContent = cliState.round;
+  document.getElementById("cliRound").textContent = cliState.round || "—";
   document.getElementById("cliCountLine").textContent =
     `Count  R ${running >= 0 ? "+" : ""}${running} · TC ${trueCount >= 0 ? "+" : ""}${trueCount.toFixed(2)}`;
-  document.getElementById("cliBetLine").textContent = `Bet  ${cliState.betUnits}u · $${cliState.bet.toFixed(2)}`;
+  document.getElementById("cliSuggestLine").textContent =
+    `Suggest  ${suggestion.units}u · $${suggestion.amount.toFixed(2)}`;
+  document.getElementById("cliBetLine").textContent =
+    cliState.bet > 0 ? `Bet  $${cliState.bet.toFixed(2)}` : "Bet  —";
   document.getElementById("cliInsuranceLine").textContent = `Insurance  ${insurance}`;
-  document.getElementById("cliHintLine").textContent =
-    cliState.phase === "player" ? `Hint  ${cliHint()}` : "Hint  hand over";
+  document.getElementById("cliHintLine").textContent = `Hint  ${cliHint()}`;
   document.getElementById("cliResult").textContent =
-    cliState.result || (cliState.dealer[0]?.rank === "A" ? "Dealer ace." : "Dealer up.");
+    cliState.result || (cliState.phase === "bet" ? "Set a bet." : "Dealer up.");
 
+  const input = document.getElementById("cliBetInput");
   const playing = cliState.phase === "player";
+  input.disabled = playing;
+  if (cliState.phase === "result") input.value = String(Math.floor(suggestion.amount));
+  else if (!playing) input.value = input.value || "25";
+  document.getElementById("cliDeal").disabled = playing;
   document.getElementById("cliHit").disabled = !playing;
   document.getElementById("cliStand").disabled = !playing;
-  document.getElementById("cliNext").disabled = playing;
 }
 
 function cliDeal() {
+  if (cliState.phase === "player") return;
   if (cliState.player.length) {
     cliState.seen.push(...cliState.player, ...cliState.dealer);
   }
@@ -3451,10 +3500,14 @@ function cliDeal() {
     cliState.shoe = cliBuildShoe();
     cliState.seen = [];
   }
-  const recommendation = cliRecommendation(cliState.seen);
-  const bet = Math.min(recommendation.amount, cliState.bankroll);
+  const suggestion = cliSuggestion(cliState.seen);
+  const input = document.getElementById("cliBetInput");
+  const requested = Number(input.value);
+  let bet = Number.isFinite(requested) && requested > 0 ? requested : suggestion.amount;
+  bet = Math.min(Math.max(1, bet), 10000, cliState.bankroll);
+  bet = cliRound2(bet);
+
   cliState.bet = bet;
-  cliState.betUnits = recommendation.units;
   cliState.bankroll = cliRound2(cliState.bankroll - bet);
   cliState.player = [];
   cliState.dealer = [];
@@ -3472,7 +3525,9 @@ function cliDeal() {
 
 function cliReset() {
   cliState = cliStateInit();
-  cliDeal();
+  const input = document.getElementById("cliBetInput");
+  if (input) input.value = "25";
+  cliRender();
 }
 
 function cliHit() {
@@ -3515,15 +3570,11 @@ function cliStand() {
   cliRender();
 }
 
-function cliNext() {
-  if (cliState.phase === "result") cliDeal();
-}
-
 function initCLIDemo() {
   if (!document.querySelector("#cliDemo")) return;
+  document.getElementById("cliDeal").addEventListener("click", cliDeal);
   document.getElementById("cliHit").addEventListener("click", cliHit);
   document.getElementById("cliStand").addEventListener("click", cliStand);
-  document.getElementById("cliNext").addEventListener("click", cliNext);
   document.getElementById("cliReset").addEventListener("click", cliReset);
   cliReset();
 }

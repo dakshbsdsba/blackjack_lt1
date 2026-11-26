@@ -18,7 +18,7 @@ from .analytics import Analytics
 from .bots import BasicStrategyBot, FlatBetBot, HiLoSpreadBot, KellyBot, MartingaleBot
 from .engine import BlackjackGame, GameState, Outcome
 from .rules import Rules
-from .simulation import run_competition, run_simulation
+from .simulation import run_bot, run_competition, run_simulation
 from .strategy import basic_strategy_action
 
 OUTCOME_STYLES = {
@@ -539,48 +539,82 @@ def run_demo(args: argparse.Namespace) -> int:
 
 
 def run_report(args: argparse.Namespace) -> int:
-    """Run a flat-bet Monte Carlo and print the summary."""
+    """Run flat and Hi-Lo Monte Carlo simulations and compare them."""
     console = Console()
     rules = Rules(num_decks=args.decks, penetration=args.penetration)
-    console.print(f"Simulating {args.simulate:,} rounds...")
+    seed = args.seed if args.seed is not None else 42
+    console.print(f"Simulating {args.simulate:,} rounds for flat and Hi-Lo...")
     started = time.perf_counter()
-    result = run_simulation(
+    flat = run_simulation(
         args.simulate,
         bet=args.bet,
         starting_bankroll=args.bankroll,
         rules=rules,
-        seed=args.seed if args.seed is not None else 42,
+        seed=seed,
+        track_decisions=True,
+    )
+    hilo = run_bot(
+        HiLoSpreadBot(name="Hi-Lo spread", unit=args.bet, spread=8),
+        args.simulate,
+        starting_bankroll=args.bankroll,
+        rules=rules,
+        seed=seed,
         track_decisions=True,
     )
     elapsed = time.perf_counter() - started
-    stats = result.analytics()
+    flat_stats = flat.analytics()
+    hilo_stats = hilo.analytics()
 
     table = Table(box=box.ROUNDED, header_style="bold")
     table.add_column("Metric")
-    table.add_column("Value", justify="right")
+    table.add_column("Flat basic", justify="right")
+    table.add_column("Hi-Lo spread", justify="right")
     rows = [
-        ("Settled hands", f"{stats.hands:,}"),
-        ("Total wagered", f"${stats.wagered:,.2f}"),
-        ("Net result", f"{stats.net:+,.2f}"),
-        ("House edge", f"{stats.house_edge_percent:.3f}%"),
-        ("Win rate", f"{stats.win_rate * 100:.2f}%"),
-        ("Blackjacks", f"{stats.blackjacks:,}"),
-        ("Longest win streak", f"{stats.longest_win_streak:,}"),
-        ("Longest loss streak", f"{stats.longest_loss_streak:,}"),
-        ("Max drawdown", f"${stats.max_drawdown:,.2f}"),
-        ("Strategy adherence", f"{stats.adherence_percent:.2f}%"),
-        ("Final bankroll", f"${stats.final_bankroll:,.2f}"),
+        ("Settled hands", f"{flat_stats.hands:,}", f"{hilo_stats.hands:,}"),
+        ("Average bet", f"${flat_stats.avg_bet:,.2f}", f"${hilo_stats.avg_bet:,.2f}"),
+        (
+            "Total wagered",
+            f"${flat_stats.wagered:,.2f}",
+            f"${hilo_stats.wagered:,.2f}",
+        ),
+        ("Net result", f"{flat_stats.net:+,.2f}", f"{hilo_stats.net:+,.2f}"),
+        (
+            "House edge",
+            f"{flat_stats.house_edge_percent:+.3f}%",
+            f"{hilo_stats.house_edge_percent:+.3f}%",
+        ),
+        (
+            "Player edge",
+            f"{-flat_stats.house_edge_percent:+.3f}%",
+            f"{-hilo_stats.house_edge_percent:+.3f}%",
+        ),
+        (
+            "Strategy adherence",
+            f"{flat_stats.adherence_percent:.2f}%",
+            f"{hilo_stats.adherence_percent:.2f}%",
+        ),
+        (
+            "Final bankroll",
+            f"${flat_stats.final_bankroll:,.2f}",
+            f"${hilo_stats.final_bankroll:,.2f}",
+        ),
     ]
-    for label, value in rows:
-        table.add_row(label, value)
+    for label, flat_value, hilo_value in rows:
+        table.add_row(label, flat_value, hilo_value)
     console.print(table)
-    console.print(f"[dim]{elapsed:.1f}s for {args.simulate:,} rounds.[/dim]")
+    console.print(
+        f"[dim]{elapsed:.1f}s for {args.simulate:,} rounds each. "
+        "House edge is positive when the house wins, so a negative "
+        "house edge is a player edge.[/dim]"
+    )
 
     if args.html:
-        from .charts import dashboard
+        from .charts import compare_curves
 
-        dashboard(result).write_html(args.html, include_plotlyjs="cdn")
-        console.print(f"Dashboard written to {args.html}")
+        compare_curves({"Flat basic": flat, "Hi-Lo spread": hilo}).write_html(
+            args.html, include_plotlyjs="cdn"
+        )
+        console.print(f"Comparison chart written to {args.html}")
     return 0
 
 
@@ -621,13 +655,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=0,
         metavar="N",
-        help="run N flat-bet rounds and print the report",
+        help="run N rounds for flat and Hi-Lo and print the comparison",
     )
     parser.add_argument(
         "--rounds", type=int, default=1000, help="rounds per bot in demo"
     )
     parser.add_argument("--seed", type=int, default=None, help="random seed")
-    parser.add_argument("--html", default=None, help="write a dashboard HTML file")
+    parser.add_argument(
+        "--html", default=None, help="write a comparison chart HTML file"
+    )
     return parser
 
 

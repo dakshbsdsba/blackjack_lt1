@@ -52,7 +52,7 @@ Run the automated bot competition:
 python -m blackjack --demo --rounds 1000
 ```
 
-Run a flat-bet Monte Carlo report:
+Run a flat and Hi-Lo Monte Carlo comparison:
 
 ```bash
 python -m blackjack --simulate 100000 --bet 10 --bankroll 1000000
@@ -118,7 +118,7 @@ requirements.txt
 4. Session analytics with strategy adherence.
 5. Shoe penetration and shuffling.
 6. Hi-Lo running and true count accounting.
-7. A 200,000 hand Monte Carlo run and the interactive dashboard.
+7. A 100,000 hand Monte Carlo run for flat and Hi-Lo, plus the interactive dashboard.
 8. Count profitability buckets and a comparison of flat betting with a Hi-Lo spread.
 9. The five-bot leaderboard.
 10. The test suite result.

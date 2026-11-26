@@ -29,8 +29,10 @@ def test_simulate_report(capsys: pytest.CaptureFixture[str]) -> None:
     assert code == 0
     output = capsys.readouterr().out
     assert "House edge" in output
+    assert "Player edge" in output
     assert "Strategy adherence" in output
     assert "Settled hands" in output
+    assert "Hi-Lo spread" in output
 
 
 def test_demo_report(capsys: pytest.CaptureFixture[str]) -> None:

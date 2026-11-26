@@ -1176,6 +1176,25 @@ body.light .backup-strip { background: #ecfeff; }
 .route-strip { border-left: 3px solid var(--accent); padding: 9px 12px; background: rgba(34, 211, 238, 0.06); color: var(--ink); font-size: clamp(0.86rem, 1vw, 0.98rem); }
 @media (max-width: 900px) { .route-grid { grid-template-columns: 1fr; } }
 
+/* Rules and edge */
+.rule-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(12px, 1.8vw, 24px); }
+.rule-panel {
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 14px 16px 12px;
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  box-shadow: var(--shadow);
+}
+.rule-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.rule-big { font-size: clamp(2.2rem, 3.8vw, 3.4rem); line-height: 1; font-weight: 800; color: var(--accent); margin: 10px 0 7px; letter-spacing: -0.04em; }
+.rule-panel.house .rule-big { color: var(--amber); }
+.rule-panel.counter .rule-big { color: var(--green); }
+.rule-panel p { font-size: clamp(0.9rem, 1.05vw, 1rem); color: var(--ink); line-height: 1.35; }
+.rule-tags { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 7px; font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.rule-strip { border-left: 3px solid var(--accent); padding: 9px 12px; background: rgba(34, 211, 238, 0.06); color: var(--ink); font-size: clamp(0.86rem, 1vw, 0.98rem); }
+@media (max-width: 900px) { .rule-grid { grid-template-columns: 1fr; } }
+
 </style>
 </head>
 <body>
@@ -1209,34 +1228,34 @@ body.light .backup-strip { background: #ecfeff; }
   </aside>
 </section>
 
-<section class="slide" data-section="The route" data-title="Three questions, one engine">
+<section class="slide" data-section="Rules and edge" data-title="Rules, house edge, counter edge">
   <div class="slide-inner">
-    <div class="kicker">01 · The route</div>
-    <h2>Three questions. One engine.</h2>
-    <div class="route-grid">
-      <div class="route-card">
-        <div class="qnum">01 · Edge</div>
-        <div class="route-q">How much does the house keep?</div>
-        <div class="route-a">About 0.4% on the flat game.</div>
-        <div class="route-tag">Answered in Payout · Monte Carlo</div>
+    <div class="kicker">01 · Rules and edge</div>
+    <h2>The rules create the edge. Counting flips it.</h2>
+    <div class="rule-grid">
+      <div class="rule-panel">
+        <div class="rule-label">The rules</div>
+        <div class="rule-big">21</div>
+        <p>Don't bust. Beat the dealer.</p>
+        <div class="rule-tags">Hit · Stand · Double · Split</div>
       </div>
-      <div class="route-card">
-        <div class="qnum">02 · Memory</div>
-        <div class="route-q">Can a counter beat the shoe?</div>
-        <div class="route-a">Yes, with a bet spread.</div>
-        <div class="route-tag">Answered in Counting · Monte Carlo</div>
+      <div class="rule-panel house">
+        <div class="rule-label">House edge</div>
+        <div class="rule-big">0.4%</div>
+        <p>You act first. Dealer acts last.</p>
+        <div class="rule-tags">3:2 blackjack · S17</div>
       </div>
-      <div class="route-card">
-        <div class="qnum">03 · Risk</div>
-        <div class="route-q">Which bet size survives?</div>
-        <div class="route-a">Not the martingale.</div>
-        <div class="route-tag">Answered in Bots · Limits</div>
+      <div class="rule-panel counter">
+        <div class="rule-label">Counter edge</div>
+        <div class="rule-big">+0.5%</div>
+        <p>Rich deck. Bet more.</p>
+        <div class="rule-tags">Hi-Lo · bet spread</div>
       </div>
     </div>
-    <div class="route-strip">The engine comes first. Then each question gets its evidence.</div>
+    <div class="rule-strip">Same rules. Better information.</div>
   </div>
   <aside class="notes">
-    <p>This is the route, not a quiz. The talk follows one engine and three questions. First the engine, then the evidence. The house edge is answered by the payout and Monte Carlo slides. Counting is answered by the count and Monte Carlo slides. Bet sizing is answered by the bots and limits slides. That is the whole narrative.</p>
+    <p>Blackjack is simple. Get closer to twenty one than the dealer without busting. Hit, stand, double or split. The house edge comes from turn order. You act first and can bust before the dealer plays. Basic strategy cuts that edge to about four tenths of a percent. Counting does not change the rules. It tracks low and high cards and raises the bet when the deck is rich in tens and aces. That turns the same game into roughly a half percent player edge.</p>
   </aside>
 </section>
 

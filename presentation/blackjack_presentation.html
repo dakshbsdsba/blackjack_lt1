@@ -1150,6 +1150,15 @@ body.light .backup-strip { background: #ecfeff; }
 .cli-key.primary { background: #22d3ee; border-color: #22d3ee; color: #04121f; }
 .cli-key:disabled { opacity: 0.35; cursor: default; }
 
+.cli-screen .cli-red { color: #fb7185; font-weight: 700; }
+.cli-screen .cli-green { color: #86efac; font-weight: 700; }
+.cli-screen .cli-yellow { color: #fbbf24; font-weight: 700; }
+.cli-screen .cli-cyan { color: #67e8f9; font-weight: 700; }
+#cliTakeIns { color: #86efac; }
+#cliDeclineIns { color: #fbbf24; }
+#cliHit { color: #fbbf24; }
+#cliStand { color: #86efac; }
+
 </style>
 </head>
 <body>
@@ -3613,10 +3622,23 @@ function cliScreenText() {
   return lines.join("\n");
 }
 
+function cliColorize(text) {
+  return text
+    .replace(/[♥♦]/g, '<span class="cli-red">$&</span>')
+    .replace(/([+-]\$[\d,]+\.\d{2})/g, (value) =>
+      `<span class="${value[0] === "+" ? "cli-green" : "cli-red"}">${value}</span>`
+    )
+    .replace(/\$0\.00/g, '<span class="cli-yellow">$0.00</span>')
+    .replace(/Bet guide/g, '<span class="cli-cyan">Bet guide</span>')
+    .replace(/Insurance hint/g, '<span class="cli-yellow">Insurance hint</span>')
+    .replace(/TAKE/g, '<span class="cli-green">TAKE</span>')
+    .replace(/DECLINE/g, '<span class="cli-yellow">DECLINE</span>');
+}
+
 function cliRender() {
   if (!document.querySelector("#cliDemo")) return;
   const screen = document.getElementById("cliScreen");
-  screen.textContent = cliScreenText();
+  screen.innerHTML = cliColorize(cliScreenText());
   const { trueCount } = cliCounts();
   const suggestion = cliSuggestion(cliVisibleCards());
   const playing = cliState.phase === "player";

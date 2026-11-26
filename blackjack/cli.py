@@ -71,6 +71,29 @@ def _hand_status(hand: object, *, is_current: bool) -> str:
     return STATUS_LABELS["split"] if hand.is_split_hand else STATUS_LABELS["playing"]
 
 
+TRAINER_SPREAD = 8
+TRAINER_INSURANCE_TC = 3.0
+
+
+def _trainer_true_count(game: BlackjackGame, reveal_dealer: bool) -> tuple[int, float]:
+    """Return the count visible to the player, hiding the dealer hole card."""
+    hole = game.dealer.cards[1] if len(game.dealer.cards) >= 2 else None
+    running = 0
+    for card in game.shoe.dealt_cards:
+        if not reveal_dealer and card is hole:
+            continue
+        running += card.hi_lo_value
+    true_count = running / max(0.5, game.shoe.decks_remaining)
+    return running, true_count
+
+
+def _trainer_bet_units(true_count: float) -> int:
+    """Return a simple 1-to-8 unit spread from the true count."""
+    if true_count < 1.0:
+        return 1
+    return min(TRAINER_SPREAD, max(1, int(round(true_count))))
+
+
 def render_table(
     console: Console,
     game: BlackjackGame,
@@ -78,6 +101,7 @@ def render_table(
     reveal_dealer: bool,
     trainer: bool = False,
     hint: bool = False,
+    trainer_unit: float | None = None,
 ) -> None:
     """Draw the table for the current round."""
     table = Table(
@@ -147,13 +171,41 @@ def render_table(
         f"  |  Discard {status['discard_tray']}"
         f"  |  Shuffles {status['shuffle_count']}"
     )
+    true_count = 0.0
     if trainer:
+        running, true_count = _trainer_true_count(game, reveal_dealer)
         footer.append(
-            f"  |  Running {status['running_count']:+d}"
-            f"  |  True {status['true_count']:+.2f}",
+            f"  |  Running {running:+d}  |  True {true_count:+.2f}",
             style="cyan",
         )
     console.print(footer)
+
+    if trainer:
+        unit = max(float(trainer_unit or game.rules.min_bet), game.rules.min_bet)
+        units = _trainer_bet_units(true_count)
+        recommended = round(
+            min(unit * units, game.rules.max_bet, max(game.bankroll, 0.0)), 2
+        )
+        line = Text()
+        line.append(f"Bet guide  ${unit:,.0f} unit  ", style="bold cyan")
+        line.append(
+            f"TC {true_count:+.2f}  →  {units} unit{'s' if units != 1 else ''}"
+            f" = ${recommended:,.2f}",
+            style="cyan",
+        )
+        line.append("  |  Insurance: ", style="dim")
+        if game.state is GameState.INSURANCE:
+            take = true_count >= TRAINER_INSURANCE_TC
+            line.append(
+                "TAKE" if take else "DECLINE", style="green" if take else "yellow"
+            )
+            line.append(
+                f"  (TC {true_count:+.2f} vs +{TRAINER_INSURANCE_TC:.2f})",
+                style="dim",
+            )
+        else:
+            line.append("n/a", style="dim")
+        console.print(line)
 
     if hint and game.state is GameState.PLAYER:
         actions = game.available_actions()
@@ -329,6 +381,7 @@ def play_interactive(args: argparse.Namespace) -> int:
             reveal_dealer=False,
             trainer=args.trainer,
             hint=args.hint,
+            trainer_unit=args.bet,
         )
 
         if game.state is GameState.INSURANCE:
@@ -345,7 +398,13 @@ def play_interactive(args: argparse.Namespace) -> int:
                 console.print(f"[red]{exc}[/red]")
                 game.take_insurance(False)
             if game.state is not GameState.PLAYER:
-                render_table(console, game, reveal_dealer=True, trainer=args.trainer)
+                render_table(
+                    console,
+                    game,
+                    reveal_dealer=True,
+                    trainer=args.trainer,
+                    trainer_unit=args.bet,
+                )
                 render_result(console, game)
                 print_session_line(console, game, starting_bankroll)
                 console.print()
@@ -385,9 +444,16 @@ def play_interactive(args: argparse.Namespace) -> int:
                     reveal_dealer=False,
                     trainer=args.trainer,
                     hint=args.hint,
+                    trainer_unit=args.bet,
                 )
 
-        render_table(console, game, reveal_dealer=True, trainer=args.trainer)
+        render_table(
+            console,
+            game,
+            reveal_dealer=True,
+            trainer=args.trainer,
+            trainer_unit=args.bet,
+        )
         render_result(console, game)
         print_session_line(console, game, starting_bankroll)
         console.print()
@@ -524,7 +590,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="dealer hits soft 17 (default is stand on soft 17)",
     )
-    parser.add_argument("--trainer", action="store_true", help="show the Hi-Lo count")
+    parser.add_argument(
+        "--trainer",
+        action="store_true",
+        help="show the Hi-Lo count, bet guide and insurance hint",
+    )
     parser.add_argument(
         "--hint", action="store_true", help="show the basic strategy hint"
     )

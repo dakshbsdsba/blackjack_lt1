@@ -88,6 +88,8 @@ def test_trainer_and_hint_flags(capsys: pytest.CaptureFixture[str]) -> None:
     assert code == 0
     output = capsys.readouterr().out
     assert "Running" in output
+    assert "Bet guide" in output
+    assert "Insurance:" in output
     assert "Basic strategy says" in output
 
 

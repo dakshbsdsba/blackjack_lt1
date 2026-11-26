@@ -10,7 +10,7 @@ All five members listed below are part of the project and the submission. The ro
 
 | Member | Role | Primary ownership | Deck slides |
 | --- | --- | --- | --- |
-| Daksh | Lead: integration and flow | End-to-end system, round state machine, module handoffs, repo integration, final demo, live CLI demo | 1, 4, 9 |
+| Daksh | Lead: integration and flow | End-to-end system, round state machine, module handoffs, repo integration, final demo, CLI Live Demo | 1, 4, 9 |
 | Julia | Technical: strategy and numbers | Basic strategy chart, Hi-Lo counting, Monte Carlo, risk charts, numerical checks | 7, 8, 10 |
 | Clark | Engine: rules and tests | Cards, hand values, dealer policy, settlement, pytest suite, engine edge cases | 5, 11 |
 | Victoria | Delivery: demo and speaking | Table walkthrough, player actions, terminal UI polish, live narration, limits and next | 3, 12 |

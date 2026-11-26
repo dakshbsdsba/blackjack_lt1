@@ -1147,17 +1147,17 @@ body.light .backup-strip { background: #ecfeff; }
   font-size: 0.72rem;
   cursor: pointer;
 }
-.cli-key.primary { background: #22d3ee; border-color: #22d3ee; color: #04121f; }
+.cli-key.primary { background: #22d3ee; border-color: #22d3ee; color: #04121f !important; }
 .cli-key:disabled { opacity: 0.35; cursor: default; }
 
 .cli-screen .cli-red { color: #fb7185; font-weight: 700; }
 .cli-screen .cli-green { color: #86efac; font-weight: 700; }
 .cli-screen .cli-yellow { color: #fbbf24; font-weight: 700; }
 .cli-screen .cli-cyan { color: #67e8f9; font-weight: 700; }
-#cliTakeIns { color: #86efac; }
-#cliDeclineIns { color: #fbbf24; }
-#cliHit { color: #fbbf24; }
-#cliStand { color: #86efac; }
+#cliTakeIns:not(.primary) { color: #86efac; }
+#cliDeclineIns:not(.primary) { color: #fbbf24; }
+#cliHit:not(.primary) { color: #fbbf24; }
+#cliStand:not(.primary) { color: #86efac; }
 
 </style>
 </head>

@@ -1,1 +1,48 @@
+======================================================================
+BLACKJACK - OFFICIAL RULES & HOW TO PLAY
+======================================================================
 
+1. OBJECTIVE/HOW TO WIN
+----------------------------------------------------------------------
+Beat the dealer by getting a hand value as close to 21 as possible 
+without going over (busting). You are playing only against the dealer, 
+not other players.
+
+Example winning scenario:
+
+You have a hand of 20 (two face cards; Jack of Spades and Queen of 
+Clubs), and the dealer has a hand of 18 (10 of Diamonds and 8 of 
+Hearts).
+
+2. CARD VALUES
+----------------------------------------------------------------------
+Card              | Value
+------------------|---------------------------------------------------
+2 through 10      | Point value of card (e.g., 7 of Hearts is worth 7)
+Jack, Queen, King | 10 points each
+Ace               | 1 or 11 points (whichever helps your hand most)
+
+
+3. HOW TO PLAY (GAME FLOW)
+----------------------------------------------------------------------
+Step 1: Place your bet before cards are dealt.
+Step 2: You and the dealer each receive 2 cards. The dealer gets one 
+        facing up (upcard), and another facing down (hole card), while
+        you get two upcards.
+Step 3: Choose your move:
+
+  Hit         - Take another card. You can hit as many times as 
+                    you like until you stand or bust.
+  Stand       - Keep your current total and end your turn.
+
+Step 4: Once you stand, the dealer reveals their hole card. The 
+        dealer MUST hit on 16 or less and stand on 17 or more.
+
+
+4. WINNING & PAYOUTS
+----------------------------------------------------------------------
+* Blackjack (Ace + 10-value card on first 2 cards) : Pays 3 to 2
+* Standard Win (Higher total than dealer <= 21)    : Pays 1 to 1
+* Dealer Busts (Dealer goes over 21)               : Pays 1 to 1
+* Push (Tie with dealer)                           : Bet returned
+* Bust (Your total goes over 21)                   : Lose bet

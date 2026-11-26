@@ -1484,7 +1484,7 @@ def true_count(self, decks_remaining: float) -> float:
     </div>
   </div>
   <aside class="notes">
-    <p>One hundred thousand hands make the noise visible. The blue line is flat basic strategy. The green line is the Hi-Lo spread on the same shoes. Flat lands around plus zero point one two percent house edge. Hi-Lo lands around minus zero point five one, a player edge. Across three hundred thousand hands the pooled edge is minus zero point four eight. The standard error is about zero point two, so short samples lie. That is why the martingale can look good for a session and still lose long run.</p>
+    <p>One hundred thousand hands make the noise visible. The blue line is flat basic strategy. The green line is the Hi-Lo spread on the same shoes. Flat lands around plus zero point one two percent house edge. Hi-Lo lands around minus zero point five one, a player edge. The dashed lines are the EV paths. Across three hundred thousand hands the pooled edge is minus zero point four eight. The standard error is about zero point two, so short samples lie. That is why the martingale can look good for a session and still lose long run.</p>
   </aside>
 </section>
 
@@ -3143,11 +3143,19 @@ function mcRender() {
   if (!mc.xMax) mc.xMax = max;
   const flatPoints = flat.indices.map((x, i) => [x, flat.bankroll[i]]).filter((p) => p[0] <= mc.xMax);
   const countPoints = counting.indices.map((x, i) => [x, counting.bankroll[i]]).filter((p) => p[0] <= mc.xMax);
-  const evPoints = flat.indices.map((x, i) => [x, flat.ev[i]]).filter((p) => p[0] <= mc.xMax);
+  const flatEvPoints = flat.indices
+    .map((x) => [x, flat.start - (Number(flat.edge) / 100) * flat.avg_bet * x])
+    .filter((p) => p[0] <= mc.xMax);
+  const countEvPoints = counting.indices
+    .map((x) => [x, counting.start - (Number(counting.edge) / 100) * counting.avg_bet * x])
+    .filter((p) => p[0] <= mc.xMax);
   const series = [];
   if (mc.showFlat) series.push({ name: "Flat basic strategy", color: "#22d3ee", points: flatPoints });
   if (mc.showCount) series.push({ name: "Hi-Lo spread", color: "#34d399", points: countPoints });
-  if (mc.showEv) series.push({ name: "Theoretical EV", color: "#94a3b8", points: evPoints, dash: "6 5", width: 1.8 });
+  if (mc.showEv) {
+    series.push({ name: "Flat EV", color: "#94a3b8", points: flatEvPoints, dash: "6 5", width: 1.5 });
+    series.push({ name: "Hi-Lo EV", color: "#34d399", points: countEvPoints, dash: "3 4", width: 1.5 });
+  }
   lineChart(host, {
     series, xMax: mc.xMax, xMin: 0, xLabel: "Settled hands", yLabel: "Bankroll ($)", height: window.innerWidth < 700 ? 420 : 240,
     yFormat: (v) => `$${Math.round(v / 1000)}k`,

@@ -58,6 +58,8 @@ Run a flat and Hi-Lo Monte Carlo comparison:
 python -m blackjack --simulate 100000 --bet 10 --bankroll 1000000 --seed 7
 ```
 
+Add `--html comparison.html` to write the bankroll and EV comparison chart.
+
 Open the notebook:
 
 ```bash

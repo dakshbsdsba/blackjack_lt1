@@ -479,11 +479,19 @@ def compare_curves(
     results: dict[str, SimResult],
     *,
     max_points: int = 3000,
+    show_ev: bool = True,
+    expected_edges: dict[str, float] | None = None,
 ) -> go.Figure:
-    """Plot several bankroll curves on one chart."""
+    """Plot bankroll and expected-value paths for several strategies.
+
+    ``expected_edges`` is an optional mapping from strategy name to house edge
+    as a decimal. When omitted, each strategy's realised house edge is used.
+    A negative edge means a player edge, so that EV line slopes upward.
+    """
     fig = go.Figure()
     palette = [BLUE, GREEN, AMBER, PURPLE, RED, "#0891b2", "#be185d"]
     for index, (name, result) in enumerate(results.items()):
+        color = palette[index % len(palette)]
         curve = result.bankroll
         indices = _downsample(curve, max_points)
         fig.add_trace(
@@ -492,11 +500,30 @@ def compare_curves(
                 y=curve[indices],
                 mode="lines",
                 name=name,
-                line=dict(color=palette[index % len(palette)], width=2),
+                line=dict(color=color, width=2),
                 hovertemplate="Hand %{x}<br>%{y:$,.0f}<extra></extra>",
             )
         )
-    _layout(fig, "Bankroll curves by strategy", height=480)
+        if show_ev:
+            edge = (
+                expected_edges[name]
+                if expected_edges is not None and name in expected_edges
+                else result.analytics().house_edge
+            )
+            ev = expected_value_curve(result, theoretical_edge=edge)
+            ev_indices = _downsample(np.arange(len(ev)), max_points)
+            fig.add_trace(
+                go.Scatter(
+                    x=ev_indices,
+                    y=ev[ev_indices],
+                    mode="lines",
+                    name=f"{name} EV",
+                    line=dict(color=color, width=1.5, dash="dash"),
+                    opacity=0.7,
+                    hovertemplate="Hand %{x}<br>EV $%{y:,.0f}<extra></extra>",
+                )
+            )
+    _layout(fig, "Bankroll and EV by strategy", height=480)
     fig.update_xaxes(title_text="Settled hands")
     fig.update_yaxes(title_text="Bankroll ($)", tickprefix="$")
     return fig

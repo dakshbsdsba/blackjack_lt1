@@ -1781,7 +1781,6 @@ function show(index, updateHash = true) {
     slide.classList.toggle("prev", i < next);
   });
   current = next;
-  if (slides[next]?.dataset.title === "The CLI, live") cliReset();
   const counter = $("#counter");
   if (counter) counter.textContent = `${next + 1} / ${slides.length}`;
   const bar = $("#progressBar");

@@ -1195,6 +1195,45 @@ body.light .backup-strip { background: #ecfeff; }
 .rule-strip { border-left: 3px solid var(--accent); padding: 9px 12px; background: rgba(34, 211, 238, 0.06); color: var(--ink); font-size: clamp(0.86rem, 1vw, 0.98rem); }
 @media (max-width: 900px) { .rule-grid { grid-template-columns: 1fr; } }
 
+/* Rules slide: felt table and edge panels */
+.table-layout { display: grid; grid-template-columns: 1.12fr 0.88fr; gap: clamp(14px, 2vw, 28px); align-items: stretch; }
+.felt {
+  min-height: 345px;
+  padding: 18px 24px;
+  border: 8px solid #3a2a1c;
+  border-radius: 120px;
+  background: radial-gradient(ellipse at 50% 42%, #0d5a37 0%, #073d27 58%, #052b1b 100%);
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.35), var(--shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+.felt-hand { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.felt-label { font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase; color: #d1fae5; font-weight: 800; }
+.felt-cards { display: flex; gap: 9px; }
+.felt .pcard { width: 62px; height: 88px; font-size: 1rem; box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
+.felt-divider { width: 76%; height: 1px; background: rgba(255, 255, 255, 0.16); }
+.felt-rules { font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; color: #bbf7d0; text-align: center; }
+.edge-stack { display: flex; flex-direction: column; gap: 12px; justify-content: center; }
+.edge-card {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 13px 16px;
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  box-shadow: var(--shadow);
+}
+.edge-card.house { border-left-color: var(--amber); }
+.edge-card.counter { border-left-color: var(--green); }
+.edge-kicker { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.edge-big { font-size: clamp(2rem, 3.2vw, 3rem); line-height: 1; font-weight: 800; margin: 7px 0 5px; color: var(--accent); letter-spacing: -0.04em; }
+.edge-card.house .edge-big { color: var(--amber); }
+.edge-card.counter .edge-big { color: var(--green); }
+.edge-card p { font-size: clamp(0.82rem, 0.95vw, 0.92rem); line-height: 1.35; color: var(--ink); }
+.edge-tag { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 900px) { .table-layout { grid-template-columns: 1fr; } .felt { min-height: 280px; } }
+
 </style>
 </head>
 <body>
@@ -1232,30 +1271,44 @@ body.light .backup-strip { background: #ecfeff; }
   <div class="slide-inner">
     <div class="kicker">01 · Rules and edge</div>
     <h2>The rules create the edge. Counting flips it.</h2>
-    <div class="rule-grid">
-      <div class="rule-panel">
-        <div class="rule-label">The rules</div>
-        <div class="rule-big">21</div>
-        <p>Don't bust. Beat the dealer.</p>
-        <div class="rule-tags">Hit · Stand · Double · Split</div>
+    <div class="table-layout">
+      <div class="felt">
+        <div class="felt-hand">
+          <div class="felt-label">Dealer · 20</div>
+          <div class="felt-cards">
+            <div class="pcard"><span>A</span><span class="suit">♣</span></div>
+            <div class="pcard"><span>9</span><span class="suit">♣</span></div>
+          </div>
+        </div>
+        <div class="felt-divider"></div>
+        <div class="felt-hand">
+          <div class="felt-label">You · 17</div>
+          <div class="felt-cards">
+            <div class="pcard"><span>10</span><span class="suit">♠</span></div>
+            <div class="pcard red"><span>7</span><span class="suit">♥</span></div>
+          </div>
+        </div>
+        <div class="felt-rules">21 wins · bust loses · hit · stand · double · split</div>
       </div>
-      <div class="rule-panel house">
-        <div class="rule-label">House edge</div>
-        <div class="rule-big">0.4%</div>
-        <p>You act first. Dealer acts last.</p>
-        <div class="rule-tags">3:2 blackjack · S17</div>
-      </div>
-      <div class="rule-panel counter">
-        <div class="rule-label">Counter edge</div>
-        <div class="rule-big">+0.5%</div>
-        <p>Rich deck. Bet more.</p>
-        <div class="rule-tags">Hi-Lo · bet spread</div>
+      <div class="edge-stack">
+        <div class="edge-card house">
+          <div class="edge-kicker">House edge</div>
+          <div class="edge-big">0.4%</div>
+          <p>You act first. Dealer acts last.</p>
+          <div class="edge-tag">3:2 blackjack · S17</div>
+        </div>
+        <div class="edge-card counter">
+          <div class="edge-kicker">Counter edge</div>
+          <div class="edge-big">+0.5%</div>
+          <p>Rich deck. Bet more.</p>
+          <div class="edge-tag">Hi-Lo · bet spread</div>
+        </div>
       </div>
     </div>
     <div class="rule-strip">Same rules. Better information.</div>
   </div>
   <aside class="notes">
-    <p>Blackjack is simple. Get closer to twenty one than the dealer without busting. Hit, stand, double or split. The house edge comes from turn order. You act first and can bust before the dealer plays. Basic strategy cuts that edge to about four tenths of a percent. Counting does not change the rules. It tracks low and high cards and raises the bet when the deck is rich in tens and aces. That turns the same game into roughly a half percent player edge.</p>
+    <p>Here is a real table. The dealer shows ace-nine for twenty. You have ten-seven for seventeen. The rules are simple: twenty one wins, bust loses, and you can hit, stand, double or split. The house edge comes from turn order. You act first and can bust before the dealer plays. Basic strategy cuts that edge to about four tenths of a percent. Counting does not change the rules. It tracks low and high cards and bets more when the deck is rich, turning the same game into roughly a half percent player edge.</p>
   </aside>
 </section>
 

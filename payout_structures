@@ -1,1 +1,183 @@
+# Payout structures
 
+How the simulator pays every possible outcome of a hand. Every number here
+comes from `blackjack/engine.py` (`start_hand`, `take_insurance`, `act`,
+`_split` and `_settle`) using the default `Rules` in `blackjack/rules.py`.
+
+Owner: Clark (Engine: rules and tests)
+
+
+## 1. Three words to know
+
+- Bet (stake): the money you put on the hand. It is taken out of the
+  bankroll as soon as the hand starts, before any cards are dealt.
+- Payout: the money the engine gives back to the bankroll when the hand
+  settles. It includes your stake if you get it back.
+- Net: your profit or loss on the hand. Net = payout - bet.
+
+Because the stake is deducted first, a win "returns 2x" but only "profits 1x".
+Casino odds such as 3:2 or 1:1 always describe the net, not the payout.
+
+
+## 2. Main hand outcomes (example bet: $10)
+
+| Outcome             | Odds | Payout returned | Net   | Example payout | Example net |
+| ------------------- | ---- | --------------- | ----- | -------------- | ----------- |
+| Blackjack (natural) | 3:2  | bet x 2.5       | +1.5x | $25            | +$15        |
+| Win                 | 1:1  | bet x 2         | +1x   | $20            | +$10        |
+| Push (tie)          | -    | bet x 1         | 0     | $10            | $0          |
+| Loss                | -    | 0               | -1x   | $0             | -$10        |
+| Bust                | -    | 0               | -1x   | $0             | -$10        |
+| Surrender           | -    | bet x 0.5       | -0.5x | $5             | -$5         |
+
+The formulas in `_settle`:
+
+    blackjack:  payout = bet * (1 + rules.blackjack_payout)   # 1 + 1.5
+    win:        payout = bet * 2
+    push:       payout = bet
+    loss/bust:  payout = 0
+    surrender:  payout = bet / 2
+
+
+## 3. What counts as each outcome
+
+- Blackjack: exactly two cards totalling 21 on the original hand
+  (an ace plus a ten-value card). See `Hand.is_blackjack`.
+- Win: the dealer busts, or your total is higher than the dealer's.
+- Push: same total as the dealer. Your stake comes back.
+- Loss: your total is lower than the dealer's.
+- Bust: your total goes over 21. You lose right away, even if the dealer
+  busts later, because the player always acts first.
+- Surrender: you give up after seeing your first two cards and get half
+  your bet back. Late surrender only: two-card original hand, not after a
+  split, and only after the dealer has checked for blackjack.
+
+
+## 4. The order the engine checks outcomes
+
+`_settle` checks each hand in this exact order and stops at the first match.
+The order matters, so a surrendered hand is never treated as a loss, and a
+bust is never paid just because the dealer also busted.
+
+1. Surrendered?            -> return half the bet
+2. Dealer has blackjack?   -> push if you also have blackjack, otherwise loss
+3. You have blackjack?     -> pay 3:2
+4. You busted?             -> loss
+5. Dealer busted or you are higher? -> win 1:1
+6. You are lower?          -> loss
+7. Otherwise (equal)       -> push
+
+
+## 5. Doubles
+
+Doubling adds a second bet the same size as the first, then you take exactly
+one more card. The hand's bet becomes 2x, and every outcome above is paid on
+the doubled bet.
+
+| Doubled $10 hand (total bet $20) | Payout | Net   |
+| -------------------------------- | ------ | ----- |
+| Win                              | $40    | +$20  |
+| Push                             | $20    | $0    |
+| Loss or bust                     | $0     | -$20  |
+
+Allowed on any first two cards, and after a split (double after split is on).
+
+
+## 6. Splits
+
+Splitting a pair makes two separate hands. The second hand gets a new bet
+equal to the first, so a $10 split puts $20 at risk.
+
+- Each hand settles on its own and writes its own `HandResult`, so one hand
+  can win while the other loses.
+  Example: hand A wins (+$10), hand B loses (-$10), round net = $0.
+- 21 after a split is NOT a blackjack. An ace plus a ten on a split hand is a
+  normal 21 and pays 1:1, not 3:2.
+- Split aces get one card each and cannot be hit. Re-splitting aces is off.
+- Up to 4 hands per round from splits.
+- You cannot surrender a split hand.
+
+
+## 7. Dealer blackjack (the peek)
+
+American rules: when the dealer shows an ace or a ten-value card, they check
+for blackjack before you act. If they have it, the round ends at once.
+
+- You lose only your original bet (you never got the chance to double or split).
+- If you also have blackjack, it is a push and you keep your bet.
+
+| $10 bet, dealer has blackjack | Payout | Net   |
+| ----------------------------- | ------ | ----- |
+| You do not have blackjack     | $0     | -$10  |
+| You also have blackjack       | $10    | $0    |
+
+
+## 8. Insurance (side bet)
+
+Offered only when the dealer's up card is an ace. Insurance is a separate bet
+of half your main bet that pays 2:1 if the dealer has blackjack.
+
+    insurance bet = bet / 2
+    dealer has blackjack:  insurance payout = insurance bet * 3   (stake + 2:1)
+    dealer has no blackjack: insurance bet is lost
+
+| $10 main bet, $5 insurance          | Insurance net | Main hand net   | Round net   |
+| ----------------------------------- | ------------- | --------------- | ----------- |
+| Dealer blackjack, you don't         | +$10          | -$10            | $0          |
+| Dealer blackjack, you do            | +$10          | $0 (push)       | +$10        |
+| No dealer blackjack, you have BJ    | -$5           | +$15            | +$10        |
+| No dealer blackjack, hand plays on  | -$5           | played normally | -$5 + hand  |
+
+Notice the first row: insurance exactly cancels the loss, which is why it is
+called "protecting" the hand. Rows two and three show "even money": with a
+blackjack plus insurance you net +$10 (1:1) whether or not the dealer has
+blackjack. It is still a bad bet for a basic-strategy
+player, because the dealer has blackjack less than one third of the time,
+while 2:1 odds only break even at exactly one third.
+
+Note for the code: insurance is credited straight to the bankroll in
+`take_insurance`. It is not part of `HandResult.net`.
+
+
+## 9. Full summary (bet = B)
+
+| Situation                      | Net        |
+| ------------------------------ | ---------- |
+| Blackjack                      | +1.5B      |
+| Win                            | +B         |
+| Push                           | 0          |
+| Loss / bust                    | -B         |
+| Surrender                      | -0.5B      |
+| Doubled win                    | +2B        |
+| Doubled loss                   | -2B        |
+| Each split hand                | +B, 0 or -B (or 2B if doubled) |
+| 21 on a split hand             | +B (not 3:2) |
+| Dealer blackjack, you don't    | -B         |
+| Dealer blackjack, you do       | 0          |
+| Insurance wins                 | +B (on the B/2 side bet) |
+| Insurance loses                | -0.5B      |
+
+
+## 10. Changing the payouts
+
+Payouts are controlled by `Rules`:
+
+- `blackjack_payout = 1.5` gives 3:2. Set it to `1.2` for a 6:5 table: a $10
+  blackjack would then net +$12 instead of +$15. Allowed range is (0, 2].
+- `late_surrender = False` removes surrender.
+- `insurance_enabled = False` removes insurance.
+- `double_after_split = False` blocks doubling on split hands.
+- Dealer hitting soft 17 (`--hit-soft-17`) changes how often you win, not
+  how much a win pays.
+
+
+## 11. Why this matters for the house edge
+
+Every doubled, split and insurance dollar is added to `total_wagered`.
+The house edge is:
+
+    house edge = -sum(net) / sum(wagered)
+
+If doubles and splits were left out of the bottom number, the edge would look
+bigger than it really is. Getting each payout right is what makes the
+simulation's house edge (about 0.35% with flat basic strategy) trustworthy.

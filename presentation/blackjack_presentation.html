@@ -1159,6 +1159,23 @@ body.light .backup-strip { background: #ecfeff; }
 #cliHit:not(.primary) { color: #fbbf24; }
 #cliStand:not(.primary) { color: #86efac; }
 
+/* Route map */
+.route-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(12px, 1.8vw, 24px); }
+.route-card {
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 14px 15px 12px;
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  box-shadow: var(--shadow);
+}
+.route-card .qnum { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
+.route-q { font-size: clamp(1.05rem, 1.45vw, 1.3rem); line-height: 1.18; font-weight: 800; color: var(--ink); margin: 7px 0 6px; }
+.route-a { font-size: clamp(0.82rem, 0.95vw, 0.9rem); color: var(--green); margin-bottom: 10px; }
+.route-tag { border-top: 1px solid var(--line); padding-top: 7px; font-size: 0.66rem; line-height: 1.35; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.route-strip { border-left: 3px solid var(--accent); padding: 9px 12px; background: rgba(34, 211, 238, 0.06); color: var(--ink); font-size: clamp(0.86rem, 1vw, 0.98rem); }
+@media (max-width: 900px) { .route-grid { grid-template-columns: 1fr; } }
+
 </style>
 </head>
 <body>
@@ -1192,32 +1209,34 @@ body.light .backup-strip { background: #ecfeff; }
   </aside>
 </section>
 
-<section class="slide" data-section="The hook" data-title="Three questions a card game can answer">
+<section class="slide" data-section="The route" data-title="Three questions, one engine">
   <div class="slide-inner">
-    <div class="kicker">01 · The hook</div>
-    <h2>Three questions a card game can answer.</h2>
-    <div class="grid-3">
-      <button class="qcard" data-answer="About 0.4% on the flat game. Small enough to feel fair, large enough to pay the casino.">
-        <div class="qnum">Question 1</div>
-        <strong>What is the house edge, really?</strong>
-        <span>By how much, and why?</span>
-      </button>
-      <button class="qcard" data-answer="Yes, with a bet spread. Across 300,000-hand runs, the flat game paid the house 0.35%; the Hi-Lo spread returned 0.48% to the player.">
-        <div class="qnum">Question 2</div>
-        <strong>Does card counting still work?</strong>
-        <span>Or just a movie trick?</span>
-      </button>
-      <button class="qcard" data-answer="Not the martingale. It can win a short session, then the table limit or the bankroll ends it.">
-        <div class="qnum">Question 3</div>
-        <strong>Which betting system survives?</strong>
-        <span>Flat, martingale, count spread or Kelly?</span>
-      </button>
+    <div class="kicker">01 · The route</div>
+    <h2>Three questions. One engine.</h2>
+    <div class="route-grid">
+      <div class="route-card">
+        <div class="qnum">01 · Edge</div>
+        <div class="route-q">How much does the house keep?</div>
+        <div class="route-a">About 0.4% on the flat game.</div>
+        <div class="route-tag">Answered in Payout · Monte Carlo</div>
+      </div>
+      <div class="route-card">
+        <div class="qnum">02 · Memory</div>
+        <div class="route-q">Can a counter beat the shoe?</div>
+        <div class="route-a">Yes, with a bet spread.</div>
+        <div class="route-tag">Answered in Counting · Monte Carlo</div>
+      </div>
+      <div class="route-card">
+        <div class="qnum">03 · Risk</div>
+        <div class="route-q">Which bet size survives?</div>
+        <div class="route-a">Not the martingale.</div>
+        <div class="route-tag">Answered in Bots · Limits</div>
+      </div>
     </div>
-    <div class="answer-strip" id="qAnswer">Click a question. The rest is evidence.</div>
-    <div class="btn-row"><button class="btn small ghost" id="revealAll">Reveal all three</button></div>
+    <div class="route-strip">The engine comes first. Then each question gets its evidence.</div>
   </div>
   <aside class="notes">
-    <p>Three questions frame the talk. What is the house edge, really? Does card counting still work? Which betting system survives? The short answers are about four tenths of one percent to the house, yes with a bet spread, and not the martingale. Every one of those answers comes from the same engine. Click a card and the rest of the talk is the evidence.</p>
+    <p>This is the route, not a quiz. The talk follows one engine and three questions. First the engine, then the evidence. The house edge is answered by the payout and Monte Carlo slides. Counting is answered by the count and Monte Carlo slides. Bet sizing is answered by the bots and limits slides. That is the whole narrative.</p>
   </aside>
 </section>
 

@@ -14,7 +14,7 @@ All five members listed below are part of the project and the submission. The ro
 | Julia | Technical: strategy and numbers | Basic strategy chart, Hi-Lo counting, Monte Carlo, risk charts, numerical checks | 7, 8, 10 |
 | Clark | Engine: rules and tests | Cards, hand values, dealer policy, settlement, pytest suite, engine edge cases | 5, 11 |
 | Victoria | Delivery: demo and speaking | Table walkthrough, player actions, terminal UI polish, live narration, limits and next | 3, 12 |
-| Ziah | Recall: flashcards and backup | Key terms, definitions, question prompts, flashcard content, backup notes, payout definitions | 2, 6 |
+| Ziah | Framing: rules and recall | Rules and edge framing, key terms, payout definitions, Q&A prompts, backup notes | 2, 6 |
 
 **Shared work.** Every member can run the app and the notebook, reviewed the deck, and contributed to the final integration. The table is the primary division, not a fence around contributions.
 
@@ -26,7 +26,7 @@ Slide 13 is the group Q&A, hosted by all five. Slides 14 to 16 are reference-onl
 - Julia: `blackjack/strategy.py`, `blackjack/counting.py`, `blackjack/simulation.py`, `blackjack/charts.py`, notebook analysis.
 - Clark: `blackjack/cards.py`, `blackjack/hand.py`, `blackjack/rules.py`, dealer and settlement paths in `blackjack/engine.py`, `tests/`.
 - Victoria: `blackjack/cli.py` table flow, demo script, `presentation/` narration, UI checks and the limits slide.
-- Ziah: glossary, definitions, Q&A prompts, payout definitions, `presentation/` backup notes.
+- Ziah: rules-and-edge framing, glossary, definitions, payout definitions, Q&A prompts, `presentation/` backup notes.
 
 The 13-slide presented deck is `presentation/blackjack_presentation.html`, with three reference-only Q&A slides (14 to 16) at the end. The previous 22-slide build remains in commit history, and the notebook still demonstrates the material that was cut from the talk.
 

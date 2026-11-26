@@ -89,8 +89,16 @@ def test_trainer_and_hint_flags(capsys: pytest.CaptureFixture[str]) -> None:
     output = capsys.readouterr().out
     assert "Running" in output
     assert "Bet guide" in output
-    assert "Insurance:" in output
+    assert output.index("Bet guide") < output.index("Seat")
     assert "Basic strategy says" in output
+
+    answers = iter(["25", "n", "stand", "q"])
+    with patch("blackjack.cli.Prompt.ask", side_effect=lambda *a, **k: next(answers)):
+        with patch("blackjack.cli.Confirm.ask", return_value=False):
+            code = main(["--seed", "4", "--trainer"])
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "Insurance hint: DECLINE" in output
 
 
 def test_table_rules_can_be_configured(capsys: pytest.CaptureFixture[str]) -> None:

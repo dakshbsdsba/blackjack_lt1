@@ -44,7 +44,7 @@ Play at the terminal:
 python -m blackjack
 ```
 
-Place a bet, then use `h` hit, `s` stand, `d` double, `p` split and `r` surrender. `python -m blackjack --help` lists the table options. `--trainer` shows the running and true count on every hand, and `--hint` shows the basic strategy recommendation before you act.
+Place a bet, then use `h` hit, `s` stand, `d` double, `p` split and `r` surrender. `python -m blackjack --help` lists the table options. `--trainer` shows the running and true count, the pre-bet unit guide and the insurance hint, and `--hint` shows the basic strategy recommendation before you act.
 
 Run the automated bot competition:
 

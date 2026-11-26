@@ -94,6 +94,27 @@ def _trainer_bet_units(true_count: float) -> int:
     return min(TRAINER_SPREAD, max(1, int(round(true_count))))
 
 
+def _trainer_bet_guide(game: BlackjackGame, unit: float) -> tuple[float, int, float]:
+    """Return the pre-bet true count, units and recommended amount."""
+    _, true_count = _trainer_true_count(game, True)
+    units = _trainer_bet_units(true_count)
+    amount = min(unit * units, game.rules.max_bet, max(game.bankroll, 0.0))
+    return true_count, units, round(amount, 2)
+
+
+def _print_trainer_bet_guide(
+    console: Console, game: BlackjackGame, unit: float
+) -> float:
+    """Print the pre-bet guide and return the recommended amount."""
+    true_count, units, amount = _trainer_bet_guide(game, unit)
+    console.print(
+        f"[bold cyan]Bet guide[/bold cyan]  ${unit:,.0f} unit  "
+        f"TC {true_count:+.2f}  →  {units} unit"
+        f"{'s' if units != 1 else ''} = ${amount:,.2f}"
+    )
+    return amount
+
+
 def render_table(
     console: Console,
     game: BlackjackGame,
@@ -101,7 +122,6 @@ def render_table(
     reveal_dealer: bool,
     trainer: bool = False,
     hint: bool = False,
-    trainer_unit: float | None = None,
 ) -> None:
     """Draw the table for the current round."""
     table = Table(
@@ -180,33 +200,6 @@ def render_table(
         )
     console.print(footer)
 
-    if trainer:
-        unit = max(float(trainer_unit or game.rules.min_bet), game.rules.min_bet)
-        units = _trainer_bet_units(true_count)
-        recommended = round(
-            min(unit * units, game.rules.max_bet, max(game.bankroll, 0.0)), 2
-        )
-        line = Text()
-        line.append(f"Bet guide  ${unit:,.0f} unit  ", style="bold cyan")
-        line.append(
-            f"TC {true_count:+.2f}  →  {units} unit{'s' if units != 1 else ''}"
-            f" = ${recommended:,.2f}",
-            style="cyan",
-        )
-        line.append("  |  Insurance: ", style="dim")
-        if game.state is GameState.INSURANCE:
-            take = true_count >= TRAINER_INSURANCE_TC
-            line.append(
-                "TAKE" if take else "DECLINE", style="green" if take else "yellow"
-            )
-            line.append(
-                f"  (TC {true_count:+.2f} vs +{TRAINER_INSURANCE_TC:.2f})",
-                style="dim",
-            )
-        else:
-            line.append("n/a", style="dim")
-        console.print(line)
-
     if hint and game.state is GameState.PLAYER:
         actions = game.available_actions()
         suggestion = basic_strategy_action(
@@ -272,13 +265,24 @@ def print_session_line(
     )
 
 
-def ask_bet(console: Console, game: BlackjackGame, default_bet: float) -> float | None:
+def ask_bet(
+    console: Console,
+    game: BlackjackGame,
+    default_bet: float,
+    *,
+    suggested_bet: float | None = None,
+) -> float | None:
     """Ask for a wager. Return None when the player wants to leave."""
     while True:
         if game.bankroll + 1e-9 < game.rules.min_bet:
             console.print("[red]You are out of chips.[/red]")
             return None
-        suggested = min(default_bet, game.bankroll)
+        suggested = (
+            suggested_bet
+            if suggested_bet is not None
+            else min(default_bet, game.bankroll)
+        )
+        suggested = min(suggested, game.rules.max_bet, game.bankroll)
         suggested = max(game.rules.min_bet, suggested)
         try:
             raw = Prompt.ask(
@@ -366,7 +370,15 @@ def play_interactive(args: argparse.Namespace) -> int:
     console.print("Type [bold]h[/bold] at the bet prompt for commands.\n")
 
     while True:
-        bet = ask_bet(console, game, args.bet)
+        suggested_bet = None
+        if args.trainer:
+            suggested_bet = _print_trainer_bet_guide(console, game, args.bet)
+        bet = ask_bet(
+            console,
+            game,
+            args.bet,
+            suggested_bet=suggested_bet,
+        )
         if bet is None:
             break
         try:
@@ -381,17 +393,25 @@ def play_interactive(args: argparse.Namespace) -> int:
             reveal_dealer=False,
             trainer=args.trainer,
             hint=args.hint,
-            trainer_unit=args.bet,
         )
 
         if game.state is GameState.INSURANCE:
+            take_default = False
+            if args.trainer:
+                _, insurance_tc = _trainer_true_count(game, False)
+                take_default = insurance_tc >= TRAINER_INSURANCE_TC
+                console.print(
+                    f"[cyan]Insurance hint:[/cyan] "
+                    f"{'TAKE' if take_default else 'DECLINE'}  "
+                    f"(TC {insurance_tc:+.2f} vs +{TRAINER_INSURANCE_TC:.2f})"
+                )
             try:
                 take = Confirm.ask(
                     f"Dealer shows an Ace. Insurance for ${bet / 2:,.2f}?",
-                    default=False,
+                    default=take_default,
                 )
             except (EOFError, KeyboardInterrupt):
-                take = False
+                take = take_default
             try:
                 game.take_insurance(take)
             except ValueError as exc:
@@ -403,7 +423,6 @@ def play_interactive(args: argparse.Namespace) -> int:
                     game,
                     reveal_dealer=True,
                     trainer=args.trainer,
-                    trainer_unit=args.bet,
                 )
                 render_result(console, game)
                 print_session_line(console, game, starting_bankroll)
@@ -444,7 +463,6 @@ def play_interactive(args: argparse.Namespace) -> int:
                     reveal_dealer=False,
                     trainer=args.trainer,
                     hint=args.hint,
-                    trainer_unit=args.bet,
                 )
 
         render_table(
@@ -452,7 +470,6 @@ def play_interactive(args: argparse.Namespace) -> int:
             game,
             reveal_dealer=True,
             trainer=args.trainer,
-            trainer_unit=args.bet,
         )
         render_result(console, game)
         print_session_line(console, game, starting_bankroll)

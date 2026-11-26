@@ -926,6 +926,109 @@ body.light .backup-strip { background: #ecfeff; }
   .slide.backup .slide-inner { gap: 1vh; }
 }
 
+/* Live CLI demo */
+.cli-demo {
+  background: #050b14;
+  border: 1px solid #23324a;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+.cli-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #0b1424;
+  border-bottom: 1px solid #23324a;
+  color: #cbd5e1;
+  font-family: var(--mono);
+  font-size: clamp(0.66rem, 0.8vw, 0.8rem);
+}
+.cli-dots { display: inline-flex; gap: 5px; }
+.cli-dots i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #334155;
+}
+.cli-dots i:first-child { background: #fb7185; }
+.cli-dots i:nth-child(2) { background: #fbbf24; }
+.cli-dots i:nth-child(3) { background: #34d399; }
+.cli-live {
+  margin-left: auto;
+  color: #34d399;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.cli-body {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: stretch;
+}
+.cli-board { padding: 14px 18px; }
+.cli-readout {
+  padding: 14px 18px;
+  border-left: 1px solid #23324a;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.cli-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 56px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #1e293b;
+}
+.cli-row:last-child { border-bottom: none; }
+.cli-seat {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #67e8f9;
+}
+.cli-total {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f8fafc;
+  text-align: right;
+}
+.cli-bank .mono { color: #cbd5e1; font-size: 0.82rem; }
+.cli-line {
+  font-family: var(--mono);
+  font-size: clamp(0.62rem, 0.74vw, 0.76rem);
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+.cli-line.accent { color: #67e8f9; }
+.cli-line.warn { color: #fbbf24; }
+.cli-line.hint { color: #86efac; }
+.cli-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px 13px;
+  border-top: 1px solid #23324a;
+}
+.cli-result {
+  margin-left: 4px;
+  color: #86efac;
+  font-family: var(--mono);
+  font-size: clamp(0.62rem, 0.72vw, 0.75rem);
+}
+@media (max-width: 900px) {
+  .cli-body { grid-template-columns: 1fr; }
+  .cli-readout { border-left: none; border-top: 1px solid #23324a; }
+}
+
 </style>
 </head>
 <body>
@@ -1243,9 +1346,57 @@ def true_count(self, decks_remaining: float) -> float:
   </aside>
 </section>
 
+<section class="slide" data-section="Live CLI" data-title="The CLI, live">
+  <div class="slide-inner">
+    <div class="kicker">08 · Live CLI</div>
+    <h2>The CLI, live.</h2>
+    <div class="cli-demo" id="cliDemo">
+      <div class="cli-titlebar">
+        <span class="cli-dots"><i></i><i></i><i></i></span>
+        <span class="mono">python -m blackjack --trainer --hint</span>
+        <span class="cli-live">LIVE</span>
+      </div>
+      <div class="cli-body">
+        <div class="cli-board">
+          <div class="cli-row">
+            <span class="cli-seat">Dealer</span>
+            <div class="hand-row small" id="cliDealerCards"></div>
+            <span class="cli-total" id="cliDealerTotal">?</span>
+          </div>
+          <div class="cli-row">
+            <span class="cli-seat">You</span>
+            <div class="hand-row small" id="cliPlayerCards"></div>
+            <span class="cli-total" id="cliPlayerTotal">17</span>
+          </div>
+          <div class="cli-row cli-bank">
+            <span class="cli-seat">Bank</span>
+            <span class="mono" id="cliBankroll">$975.00</span>
+            <span class="cli-total" id="cliRound">-$25</span>
+          </div>
+        </div>
+        <div class="cli-readout">
+          <div class="cli-line" id="cliCountLine">Running -2 · True -0.34</div>
+          <div class="cli-line accent" id="cliBetLine">Bet guide  $25 unit  TC -0.34  →  1 unit = $25.00</div>
+          <div class="cli-line warn" id="cliInsuranceLine">Insurance: DECLINE  (TC -0.34 vs +3.00)</div>
+          <div class="cli-line hint" id="cliHintLine">Basic strategy says: stand</div>
+        </div>
+        <div class="cli-actions">
+          <button class="btn small" id="cliHit">Hit</button>
+          <button class="btn small primary" id="cliStand">Stand</button>
+          <button class="btn small ghost" id="cliReset">Reset</button>
+          <span class="cli-result" id="cliResult">Dealer shows an ace.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Here is the CLI itself, started with trainer and hint on. The dealer shows an ace, so the insurance hint is live. The true count is below plus three, so it says decline. I stand on seventeen, the dealer reveals five and draws ten, busts, and the hand pays. The bet guide scales from one to eight units as the count rises.</p>
+  </aside>
+</section>
+
 <section class="slide" data-section="Tier 3 · Monte Carlo" data-title="One hundred thousand hands make the noise visible">
   <div class="slide-inner">
-    <div class="kicker">08 · Monte Carlo</div>
+    <div class="kicker">09 · Monte Carlo</div>
     <h2>One hundred thousand hands make the noise visible.</h2>
     <div class="panel chart-panel">
       <div class="range-row">
@@ -1273,7 +1424,7 @@ def true_count(self, decks_remaining: float) -> float:
 
 <section class="slide" data-section="Quality gate" data-title="513 tests, one gate">
   <div class="slide-inner">
-    <div class="kicker">09 · Quality gate</div>
+    <div class="kicker">10 · Quality gate</div>
     <h2>513 tests. One gate.</h2>
     <div class="grid-2">
       <div class="panel">
@@ -1308,7 +1459,7 @@ def true_count(self, decks_remaining: float) -> float:
 
 <section class="slide" data-section="Limits and next" data-title="What we would build next">
   <div class="slide-inner">
-    <div class="kicker">10 · Limits and next</div>
+    <div class="kicker">11 · Limits and next</div>
     <h2>What we would build next.</h2>
     <div class="grid-2">
       <div class="panel">
@@ -1339,7 +1490,7 @@ def true_count(self, decks_remaining: float) -> float:
 
 <section class="slide" data-section="Q&amp;A" data-title="Questions">
   <div class="slide-inner">
-    <div class="kicker">11 · Q&A</div>
+    <div class="kicker">12 · Q&A</div>
     <h2>Questions?</h2>
     <div class="qa-grid">
       <div class="panel">
@@ -1586,13 +1737,14 @@ const PRESENTERS = {
   6: "Ziah",
   7: "Julia",
   8: "Julia",
-  9: "Julia",
-  10: "Clark",
-  11: "Victoria",
-  12: "All five",
-  13: "Backup",
+  9: "Daksh",
+  10: "Julia",
+  11: "Clark",
+  12: "Victoria",
+  13: "All five",
   14: "Backup",
   15: "Backup",
+  16: "Backup",
 };
 let current = -1;
 let overviewOpen = false;
@@ -1616,6 +1768,7 @@ function show(index, updateHash = true) {
     slide.classList.toggle("prev", i < next);
   });
   current = next;
+  if (slides[next]?.dataset.title === "The CLI, live") cliReset();
   const counter = $("#counter");
   if (counter) counter.textContent = `${next + 1} / ${slides.length}`;
   const bar = $("#progressBar");
@@ -3114,6 +3267,187 @@ function renderAllCharts() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Live CLI demo                                                       */
+/* ------------------------------------------------------------------ */
+const CLI_DECKS = 6;
+const CLI_UNIT = 25;
+const CLI_START_BANKROLL = 1000;
+
+function cliCard(rank, suit) {
+  const value = rank === "A" ? 11 : ["K", "Q", "J", "10"].includes(rank) ? 10 : Number(rank);
+  return { rank, suit, value };
+}
+
+function cliHardTotal(cards) {
+  return cards.reduce((sum, card) => sum + (card.rank === "A" ? 1 : card.value), 0);
+}
+
+function cliTotal(cards) {
+  const hard = cliHardTotal(cards);
+  return cards.some((card) => card.rank === "A") && hard + 10 <= 21 ? hard + 10 : hard;
+}
+
+function cliSoft(cards) {
+  return cliTotal(cards) !== cliHardTotal(cards);
+}
+
+function cliHiLo(card) {
+  if (["2", "3", "4", "5", "6"].includes(card.rank)) return 1;
+  if (["10", "J", "Q", "K", "A"].includes(card.rank)) return -1;
+  return 0;
+}
+
+function cliStateInit() {
+  return {
+    player: [cliCard("10", "♠"), cliCard("7", "♥")],
+    dealer: [cliCard("A", "♣"), cliCard("5", "♣")],
+    draw: [cliCard("10", "♦"), cliCard("10", "♠")],
+    phase: "player",
+    reveal: false,
+    drawUsed: false,
+    result: "",
+    round: "-$25",
+    bankroll: CLI_START_BANKROLL - CLI_UNIT,
+  };
+}
+
+let cliState = cliStateInit();
+
+function cliVisibleCards() {
+  const cards = [...cliState.player, cliState.dealer[0]];
+  if (cliState.reveal) {
+    cards.push(...cliState.dealer.slice(1));
+  }
+  return cards;
+}
+
+function cliCounts() {
+  const visible = cliVisibleCards();
+  const running = visible.reduce((sum, card) => sum + cliHiLo(card), 0);
+  const dealt = cliState.player.length + cliState.dealer.length;
+  const decks = Math.max(0.5, (52 * CLI_DECKS - dealt) / 52);
+  return { running, trueCount: running / decks };
+}
+
+function cliUnits(trueCount) {
+  if (trueCount < 1) return 1;
+  return Math.min(8, Math.max(1, Math.round(trueCount)));
+}
+
+function cliHint() {
+  const total = cliTotal(cliState.player);
+  const dealer = cliState.dealer[0].value === 11 ? 11 : cliState.dealer[0].value;
+  if (total >= 17) return "stand";
+  if (total <= 11) return "hit";
+  if (dealer >= 2 && dealer <= 6 && !cliSoft(cliState.player)) return "stand";
+  return "hit";
+}
+
+function cliCardHTML(card, hidden = false) {
+  if (hidden) return '<div class="pcard small back" aria-label="hidden card"></div>';
+  const red = card.suit === "♥" || card.suit === "♦";
+  return `<div class="pcard small${red ? " red" : ""}"><span>${card.rank}</span><span class="suit">${card.suit}</span></div>`;
+}
+
+function cliRenderCards(id, cards, hiddenIndex = -1) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  node.innerHTML = cards
+    .map((card, index) => cliCardHTML(card, index === hiddenIndex))
+    .join("");
+}
+
+function cliRender() {
+  if (!document.querySelector("#cliDemo")) return;
+  const { running, trueCount } = cliCounts();
+  const units = cliUnits(trueCount);
+  const bet = units * CLI_UNIT;
+  const dealerHidden = !cliState.reveal;
+  const dealerTotal = dealerHidden ? "?" : cliTotal(cliState.dealer);
+  const playerTotal = cliTotal(cliState.player);
+  const insurance =
+    cliState.phase === "player" && cliState.dealer[0].rank === "A"
+      ? `${trueCount >= 3 ? "TAKE" : "DECLINE"}  (TC ${trueCount >= 0 ? "+" : ""}${trueCount.toFixed(2)} vs +3.00)`
+      : "n/a";
+
+  cliRenderCards("cliDealerCards", cliState.dealer, dealerHidden ? 1 : -1);
+  cliRenderCards("cliPlayerCards", cliState.player);
+  document.getElementById("cliDealerTotal").textContent = dealerTotal;
+  document.getElementById("cliPlayerTotal").textContent = playerTotal;
+  document.getElementById("cliBankroll").textContent = `$${cliState.bankroll.toFixed(2)}`;
+  document.getElementById("cliRound").textContent = cliState.round;
+  document.getElementById("cliCountLine").textContent =
+    `Running ${running >= 0 ? "+" : ""}${running} · True ${trueCount >= 0 ? "+" : ""}${trueCount.toFixed(2)}`;
+  document.getElementById("cliBetLine").textContent =
+    `Bet guide  $${CLI_UNIT} unit  TC ${trueCount >= 0 ? "+" : ""}${trueCount.toFixed(2)}  →  ${units} unit${units === 1 ? "" : "s"} = $${bet.toFixed(2)}`;
+  document.getElementById("cliInsuranceLine").textContent = `Insurance: ${insurance}`;
+  document.getElementById("cliHintLine").textContent =
+    cliState.phase === "player" ? `Basic strategy says: ${cliHint()}` : "Hand complete.";
+  document.getElementById("cliResult").textContent =
+    cliState.result || "Dealer shows an ace.";
+
+  const done = cliState.phase !== "player";
+  document.getElementById("cliHit").disabled = done;
+  document.getElementById("cliStand").disabled = done;
+}
+
+function cliReset() {
+  cliState = cliStateInit();
+  cliState.drawUsed = false;
+  cliRender();
+}
+
+function cliHit() {
+  if (cliState.phase !== "player") return;
+  cliState.player.push(cliState.draw.shift());
+  cliState.drawUsed = true;
+  cliState.reveal = true;
+  cliState.phase = "result";
+  if (cliTotal(cliState.player) > 21) {
+    cliState.result = "Bust. Dealer wins.";
+    cliState.round = "-$25";
+    cliState.bankroll = CLI_START_BANKROLL - CLI_UNIT;
+  } else {
+    cliState.result = "Stand. Compare hands.";
+  }
+  cliRender();
+}
+
+function cliStand() {
+  if (cliState.phase !== "player") return;
+  cliState.reveal = true;
+  while (cliTotal(cliState.dealer) < 17 && cliState.draw.length) {
+    cliState.dealer.push(cliState.draw.shift());
+    cliState.drawUsed = true;
+  }
+  cliState.phase = "result";
+  const player = cliTotal(cliState.player);
+  const dealer = cliTotal(cliState.dealer);
+  if (dealer > 21 || player > dealer) {
+    cliState.result = `Dealer ${dealer > 21 ? "busts" : "stands"}. You win +$25.00.`;
+    cliState.round = "+$25";
+    cliState.bankroll = CLI_START_BANKROLL + CLI_UNIT;
+  } else if (player === dealer) {
+    cliState.result = "Push. Stake returned.";
+    cliState.round = "$0";
+    cliState.bankroll = CLI_START_BANKROLL;
+  } else {
+    cliState.result = `Dealer ${dealer}. You lose.`;
+    cliState.round = "-$25";
+    cliState.bankroll = CLI_START_BANKROLL - CLI_UNIT;
+  }
+  cliRender();
+}
+
+function initCLIDemo() {
+  if (!document.querySelector("#cliDemo")) return;
+  document.getElementById("cliHit").addEventListener("click", cliHit);
+  document.getElementById("cliStand").addEventListener("click", cliStand);
+  document.getElementById("cliReset").addEventListener("click", cliReset);
+  cliReset();
+}
+
+/* ------------------------------------------------------------------ */
 /* Startup                                                             */
 /* ------------------------------------------------------------------ */
 function init() {
@@ -3131,6 +3465,7 @@ function init() {
   initMosaic();
   initShoe();
   initCount();
+  initCLIDemo();
   initMC();
   initRisk();
   initLeaderboard();

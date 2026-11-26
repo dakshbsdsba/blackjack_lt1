@@ -6,19 +6,19 @@ Built as a group project for PROG1301, a Python programming course, by Daksh, Ju
 
 ## Division of labor
 
-All five members listed below are part of the project and the submission. The roles match the presenter assignments in the 12-slide deck. The codebase is shared, but each person owned the following areas and was the primary presenter for the listed slides.
+All five members listed below are part of the project and the submission. The roles match the presenter assignments in the 13-slide deck. The codebase is shared, but each person owned the following areas and was the primary presenter for the listed slides.
 
 | Member | Role | Primary ownership | Deck slides |
 | --- | --- | --- | --- |
-| Daksh | Lead: integration and flow | End-to-end system, round state machine, module handoffs, repo integration, final demo | 1, 4 |
-| Julia | Technical: strategy and numbers | Basic strategy chart, Hi-Lo counting, Monte Carlo, risk charts, numerical checks | 7, 8, 9 |
-| Clark | Engine: rules and tests | Cards, hand values, dealer policy, settlement, pytest suite, engine edge cases | 5, 10 |
-| Victoria | Delivery: demo and speaking | Table walkthrough, player actions, terminal UI polish, live narration, limits and next | 3, 11 |
+| Daksh | Lead: integration and flow | End-to-end system, round state machine, module handoffs, repo integration, final demo, live CLI demo | 1, 4, 9 |
+| Julia | Technical: strategy and numbers | Basic strategy chart, Hi-Lo counting, Monte Carlo, risk charts, numerical checks | 7, 8, 10 |
+| Clark | Engine: rules and tests | Cards, hand values, dealer policy, settlement, pytest suite, engine edge cases | 5, 11 |
+| Victoria | Delivery: demo and speaking | Table walkthrough, player actions, terminal UI polish, live narration, limits and next | 3, 12 |
 | Ziah | Recall: flashcards and backup | Key terms, definitions, question prompts, flashcard content, backup notes, payout definitions | 2, 6 |
 
 **Shared work.** Every member can run the app and the notebook, reviewed the deck, and contributed to the final integration. The table is the primary division, not a fence around contributions.
 
-Slide 12 is the group Q&A, hosted by all five. Slides 13 to 15 are reference-only Q&A and are not part of the presented run.
+Slide 13 is the group Q&A, hosted by all five. Slides 14 to 16 are reference-only Q&A and are not part of the presented run.
 
 **Artifacts by area.**
 
@@ -28,7 +28,7 @@ Slide 12 is the group Q&A, hosted by all five. Slides 13 to 15 are reference-onl
 - Victoria: `blackjack/cli.py` table flow, demo script, `presentation/` narration, UI checks and the limits slide.
 - Ziah: glossary, definitions, Q&A prompts, payout definitions, `presentation/` backup notes.
 
-The 12-slide presented deck is `presentation/blackjack_presentation.html`, with three reference-only Q&A slides (13 to 15) at the end. The previous 22-slide build remains in commit history, and the notebook still demonstrates the material that was cut from the talk.
+The 13-slide presented deck is `presentation/blackjack_presentation.html`, with three reference-only Q&A slides (14 to 16) at the end. The previous 22-slide build remains in commit history, and the notebook still demonstrates the material that was cut from the talk.
 
 ## Quick start
 
@@ -66,7 +66,7 @@ jupyter notebook notebooks/Prog_Project.ipynb
 
 ## Presentation
 
-`presentation/blackjack_presentation.html` is a single self-contained 12-slide deck with live demos, speaker notes, a timer and keyboard controls. The presented slides are deliberately sparse. The detailed mechanics live in the speaker notes and the reference slides. Three reference-only Q&A slides sit at the end: they are visible in normal windowed mode and disappear in fullscreen. Open it directly in a browser, or serve the folder with `python3 presentation/serve.py --port 8088 --root presentation --state /tmp/blackjack-notes` to enable the editable shared notes. See `presentation/README.md` for the controls, notes API and data builder.
+`presentation/blackjack_presentation.html` is a single self-contained 13-slide deck with live demos, speaker notes, a timer and keyboard controls. The presented slides are deliberately sparse. The detailed mechanics live in the speaker notes and the reference slides. Three reference-only Q&A slides sit at the end: they are visible in normal windowed mode and disappear in fullscreen. Open it directly in a browser, or serve the folder with `python3 presentation/serve.py --port 8088 --root presentation --state /tmp/blackjack-notes` to enable the editable shared notes. See `presentation/README.md` for the controls, notes API and data builder.
 
 ## Rules implemented
 

@@ -1586,15 +1586,17 @@ def true_count(self, decks_remaining: float) -> float:
           <button class="cli-key primary" id="cliDeclineIns">n</button>
         </div>
         <div class="cli-prompt" id="cliActionPrompt" hidden>
-          <span>Action [hit/stand] (strategy: <span id="cliStrategy">stand</span>):</span>
+          <span>Action [<span id="cliActionList">hit/stand/double/surrender</span>] (strategy: <span id="cliStrategy">stand</span>):</span>
           <button class="cli-key" id="cliHit">hit</button>
           <button class="cli-key primary" id="cliStand">stand</button>
+          <button class="cli-key" id="cliDouble">double</button>
+          <button class="cli-key" id="cliSurrender">surrender</button>
         </div>
       </div>
     </div>
   </div>
   <aside class="notes">
-    <p>Here is the CLI itself, mirrored in the deck so I can play it without leaving the browser. The command above is the real one. I set the bet and deal. The trainer row shows the count and the suggested unit size before the bet, then the insurance hint before the insurance prompt. The dealer shows an ace, but the true count is below plus three, so the prompt recommends decline. I decline, stand on seventeen, the dealer reveals five and draws two tens, busts, and the hand pays. The next bet prompt keeps the bankroll and count going, and the suggested bet scales from one to eight units as the count rises.</p>
+    <p>Here is the CLI itself, mirrored in the deck so I can play it without leaving the browser. The command above is the real one. I set the bet and deal. The trainer row shows the count and the suggested unit size before the bet, then the insurance hint before the insurance prompt. The dealer shows an ace, but the true count is below plus three, so the prompt recommends decline. I decline. The prompt offers hit, stand, double and surrender while the hand has two cards. I stand on seventeen, the dealer reveals five and draws two tens, busts, and the hand pays. The next bet prompt keeps the bankroll and count going, and the suggested bet scales from one to eight units as the count rises.</p>
   </aside>
 </section>
 
@@ -3547,6 +3549,10 @@ function cliMoney(value) {
   })}`;
 }
 
+function cliSignedMoney(value) {
+  return `${value >= 0 ? "+" : "-"}$${Math.abs(value).toFixed(2)}`;
+}
+
 function cliSuggestion(cards) {
   const running = cards.reduce((sum, card) => sum + cliHiLo(card), 0);
   const decks = Math.max(0.5, (52 * CLI_DECKS - cards.length) / 52);
@@ -3566,6 +3572,8 @@ function cliStateInit() {
     phase: "bet",
     reveal: false,
     insuranceBet: 0,
+    doubled: false,
+    surrendered: false,
     result: "",
     round: "",
   };
@@ -3617,13 +3625,17 @@ function cliTableText() {
     : cliTotal(cliState.dealer) > 21
       ? "Bust"
       : "Stand";
-  const playerStatus = cliState.player.length
-    ? cliState.phase === "player" || cliState.phase === "insurance"
-      ? "Playing"
-      : cliTotal(cliState.player) > 21
-        ? "Bust"
-        : "Stand"
-    : "";
+  const playerStatus = cliState.surrendered
+    ? "Surrender"
+    : cliState.doubled
+      ? "Doubled"
+      : cliState.player.length
+        ? cliState.phase === "player" || cliState.phase === "insurance"
+          ? "Playing"
+          : cliTotal(cliState.player) > 21
+            ? "Bust"
+            : "Stand"
+        : "";
   const row = (cells) =>
     `│ ${cells[0].padEnd(CLI_WIDTHS[0])} │ ${cells[1].padEnd(CLI_WIDTHS[1])} │ ` +
     `${cells[2].padStart(CLI_WIDTHS[2])} │ ${cells[3].padStart(CLI_WIDTHS[3])} │ ` +
@@ -3748,6 +3760,14 @@ function cliRender() {
 
   document.getElementById("cliTakeIns").classList.toggle("primary", insuring && trueCount >= 3);
   document.getElementById("cliDeclineIns").classList.toggle("primary", insuring && trueCount < 3);
+  const canDouble = playing && cliState.player.length === 2 && cliState.bankroll + 1e-9 >= cliState.bet;
+  const canSurrender = playing && cliState.player.length === 2;
+  const choices = ["hit", "stand"];
+  if (canDouble) choices.push("double");
+  if (canSurrender) choices.push("surrender");
+  document.getElementById("cliActionList").textContent = choices.join("/");
+  document.getElementById("cliDouble").hidden = !canDouble;
+  document.getElementById("cliSurrender").hidden = !canSurrender;
   document.getElementById("cliHit").classList.toggle("primary", playing && cliHint() === "hit");
   document.getElementById("cliStand").classList.toggle("primary", playing && cliHint() === "stand");
 }
@@ -3774,6 +3794,8 @@ function cliDeal() {
   cliState.dealer = [];
   cliState.reveal = false;
   cliState.insuranceBet = 0;
+  cliState.doubled = false;
+  cliState.surrendered = false;
   cliState.phase = "player";
   cliState.result = "";
   cliState.round = `-$${bet.toFixed(2)}`;
@@ -3797,7 +3819,39 @@ function cliTakeInsurance() {
 function cliDeclineInsurance() {
   if (cliState.phase !== "insurance") return;
   cliState.insuranceBet = 0;
+  cliState.doubled = false;
+  cliState.surrendered = false;
   cliState.phase = "player";
+  cliRender();
+}
+
+function cliFinish() {
+  if (cliState.phase !== "player") return;
+  cliState.reveal = true;
+  const player = cliTotal(cliState.player);
+  if (player <= 21) {
+    while (cliTotal(cliState.dealer) < 17 && cliState.shoe.length) {
+      cliState.dealer.push(cliState.shoe.shift());
+    }
+  }
+  cliState.phase = "result";
+  const dealer = cliTotal(cliState.dealer);
+  let mainNet = -cliState.bet;
+  let label = `Dealer ${dealer}`;
+  if (player > 21) {
+    label = "Bust";
+  } else if (dealer > 21 || player > dealer) {
+    cliState.bankroll = cliRound2(cliState.bankroll + cliState.bet * 2);
+    mainNet = cliState.bet;
+    label = dealer > 21 ? "Dealer busts" : `Dealer ${dealer}`;
+  } else if (player === dealer) {
+    cliState.bankroll = cliRound2(cliState.bankroll + cliState.bet);
+    mainNet = 0;
+    label = "Push";
+  }
+  const net = cliRound2(mainNet - cliState.insuranceBet);
+  cliState.round = cliSignedMoney(net);
+  cliState.result = `${label} · ${cliSignedMoney(net)}`;
   cliRender();
 }
 
@@ -3805,42 +3859,33 @@ function cliHit() {
   if (cliState.phase !== "player") return;
   cliState.player.push(cliState.shoe.shift());
   const total = cliTotal(cliState.player);
-  if (total > 21) {
-    cliState.reveal = true;
-    cliState.phase = "result";
-    const loss = cliRound2(cliState.bet + cliState.insuranceBet);
-    cliState.result = `Bust · -$${loss.toFixed(2)}`;
-    cliState.round = `-$${loss.toFixed(2)}`;
-  } else if (total === 21) {
-    cliStand();
-    return;
-  }
-  cliRender();
+  if (total >= 21) cliFinish();
+  else cliRender();
 }
 
 function cliStand() {
-  if (cliState.phase !== "player") return;
+  cliFinish();
+}
+
+function cliDouble() {
+  if (cliState.phase !== "player" || cliState.player.length !== 2) return;
+  if (cliState.bankroll + 1e-9 < cliState.bet) return;
+  cliState.bankroll = cliRound2(cliState.bankroll - cliState.bet);
+  cliState.bet = cliRound2(cliState.bet * 2);
+  cliState.doubled = true;
+  cliState.player.push(cliState.shoe.shift());
+  cliFinish();
+}
+
+function cliSurrender() {
+  if (cliState.phase !== "player" || cliState.player.length !== 2) return;
   cliState.reveal = true;
-  while (cliTotal(cliState.dealer) < 17 && cliState.shoe.length) {
-    cliState.dealer.push(cliState.shoe.shift());
-  }
+  cliState.surrendered = true;
+  cliState.bankroll = cliRound2(cliState.bankroll + cliState.bet / 2);
+  const net = cliRound2(-cliState.bet / 2 - cliState.insuranceBet);
   cliState.phase = "result";
-  const player = cliTotal(cliState.player);
-  const dealer = cliTotal(cliState.dealer);
-  let mainNet = -cliState.bet;
-  if (dealer > 21 || player > dealer) {
-    cliState.bankroll = cliRound2(cliState.bankroll + cliState.bet * 2);
-    mainNet = cliState.bet;
-  } else if (player === dealer) {
-    cliState.bankroll = cliRound2(cliState.bankroll + cliState.bet);
-    mainNet = 0;
-  }
-  const net = cliRound2(mainNet - cliState.insuranceBet);
-  cliState.round = `${net >= 0 ? "+" : ""}$${net.toFixed(2)}`;
-  cliState.result =
-    dealer > 21
-      ? `Dealer busts · ${net >= 0 ? "+" : ""}$${net.toFixed(2)}`
-      : `Dealer ${dealer} · ${net >= 0 ? "+" : ""}$${net.toFixed(2)}`;
+  cliState.round = cliSignedMoney(net);
+  cliState.result = `Surrender · ${cliSignedMoney(net)}`;
   cliRender();
 }
 
@@ -3858,6 +3903,8 @@ function initCLIDemo() {
   document.getElementById("cliDeclineIns").addEventListener("click", cliDeclineInsurance);
   document.getElementById("cliHit").addEventListener("click", cliHit);
   document.getElementById("cliStand").addEventListener("click", cliStand);
+  document.getElementById("cliDouble").addEventListener("click", cliDouble);
+  document.getElementById("cliSurrender").addEventListener("click", cliSurrender);
   cliReset();
 }
 

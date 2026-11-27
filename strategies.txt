@@ -1,5 +1,7 @@
+
 # STRATEGIES USED
 
+-----------------------------------------------------------------------------------------------------------------------------------------
 
 #1 FLAT BETTOR
 
@@ -9,7 +11,7 @@ It provides a simple control or baseline for comparing the other betting methods
 Limitation: Flat betting doesn't respond to favorable cards or changing probabilities.
 It also doesn't eliminate the casino's advantage.
 
-
+-----------------------------------------------------------------------------------------------------------------------------------------
 
 #2 HALF KELLY
 
@@ -24,7 +26,7 @@ In this system:
 
 Advantage: This method adjusts bet size with the estimated advantage and bankroll. (unlike martingale)
 
-
+-----------------------------------------------------------------------------------------------------------------------------------------
 
 #3 HI-LO SPREAD 
 
@@ -41,7 +43,7 @@ The true value = running count/decks remaining
 he Hi-Lo spread bot bets one base unit below its true-count threshold (default +1). 
 At or above the threshold, it scales the number of units with the rounded true count, up to a default maximum of 8 units.
 
-
+-----------------------------------------------------------------------------------------------------------------------------------------
 
 #4 BASIC STRATEGY
 
@@ -56,7 +58,7 @@ The goal is to minimize expected loss for the configured rules rather than to pr
 Wagers a fixed base unit and follows these recommendations. 
   ->Because Flat Bettor also inherits the same basic-strategy playing decisions, these two bots can behave similarly.
 
-
+-----------------------------------------------------------------------------------------------------------------------------------------
 
 #5 MARTINGALE
 The Martingale bot increases its next bet after a losing round, generally by doubling for every consecutive loss. 

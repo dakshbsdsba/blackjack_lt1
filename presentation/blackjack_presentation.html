@@ -1632,22 +1632,16 @@ def true_count(self, decks_remaining: float) -> float:
     <h2>The test suite. One gate.</h2>
     <div class="grid-2">
       <div class="panel">
-        <div class="stat-row four">
+        <div class="stat-row two">
           <div class="stat"><div class="label">Tests</div><div class="big">PASS</div></div>
           <div class="stat"><div class="label">Strategy</div><div class="big" data-count="376">0</div></div>
-          <div class="stat"><div class="label">Flake8</div><div class="big" data-count="0">0</div></div>
-          <div class="stat"><div class="label">Black files</div><div class="big" data-count="25">0</div></div>
         </div>
-        <p class="small" style="margin-top:12px;">The gate is pytest, Black, Flake8 and an executed notebook.</p>
+        <p class="small" style="margin-top:12px;">The gate is pytest and an executed notebook.</p>
       </div>
       <div class="panel">
         <div class="terminal">
           <div><span class="prompt">$</span> pytest -q</div>
           <div class="ok">all passed</div>
-          <div><span class="prompt">$</span> black --check blackjack tests</div>
-          <div class="ok">25 files would be left unchanged</div>
-          <div><span class="prompt">$</span> flake8 blackjack tests</div>
-          <div class="ok">no findings</div>
           <div><span class="prompt">$</span> jupyter nbconvert --execute ...</div>
           <div class="ok">notebook executed, zero errors</div>
         </div>
@@ -1656,7 +1650,7 @@ def true_count(self, decks_remaining: float) -> float:
     </div>
   </div>
   <aside class="notes">
-    <p>The full suite passes. Three hundred seventy six strategy cases match an independent reference. The chip ledger is invariant across every hand. Split state is isolated. Black and flake8 are clean, and the notebook executes end to end. We test at the engine boundary, not through the UI. The shoes are seeded, so failures reproduce. That is the difference between a demo and something another data scientist can rebuild.</p>
+    <p>The full suite passes. Three hundred seventy six strategy cases match an independent reference. The chip ledger is invariant across every hand. Split state is isolated. The notebook executes end to end. We test at the engine boundary, not through the UI. The shoes are seeded, so failures reproduce. That is the difference between a demo and something another data scientist can rebuild.</p>
   </aside>
 </section>
 
